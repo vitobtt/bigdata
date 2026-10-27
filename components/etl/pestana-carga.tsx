@@ -208,6 +208,24 @@ export function PestanaCarga({ etl }: { etl: PipelineEtl }) {
     [vistaEfectiva, carga, aCargar]
   )
 
+  // Estado del conjunto mostrado respecto a Supabase. La selección actual solo
+  // cuenta como subida si es idéntica (misma huella) a la copia que se cargó.
+  const conjuntoEsLaCarga =
+    !!carga &&
+    (vistaEfectiva === "congelado" || etl.huellaACargar === carga.huella)
+  const todoConfirmado =
+    !!carga &&
+    carga.lotes.every(
+      (l) => l.envio === "completado" && l.verificacion === "confirmado"
+    )
+  const [estadoConjunto, textoConjunto]: [Estado, string] = !conjuntoEsLaCarga
+    ? ["pendiente", "En tu navegador · aún no se ha subido"]
+    : carga.enCurso
+      ? ["en_curso", "Subiendo a Supabase…"]
+      : todoConfirmado
+        ? ["completada", "Subido y confirmado en Supabase"]
+        : ["error", "Subida incompleta: revisa los lotes"]
+
   return (
     <div className="flex flex-col gap-4">
       <Alert>
@@ -318,9 +336,11 @@ export function PestanaCarga({ etl }: { etl: PipelineEtl }) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 id="titulo-vista-previa" className="text-sm font-semibold">
             Vista previa: conjunto exacto que se enviará, en el orden elegido
-            <span className="ml-2 inline-flex items-center rounded-md border px-1.5 text-xs font-normal">
-              En tu navegador · aún no está en Supabase
-            </span>
+            <InsigniaEstado
+              estado={estadoConjunto}
+              etiqueta={textoConjunto}
+              className="ml-2 align-middle font-normal"
+            />
           </h3>
           {carga && (
             <div
