@@ -33,7 +33,10 @@ type Fase = {
   entrada: string
   salida: string
   extra?: string
+  /** Qué pasa, en lenguaje sencillo. */
   explicacion: string
+  /** El mismo paso en términos técnicos. */
+  tecnico: string
   duracionMs?: number
   pestana: Pestana
 }
@@ -80,7 +83,9 @@ function calcularFases(etl: PipelineEtl): Fase[] {
       salida: t ? `${formatoEntero(t.posicionesEntrada)} horas recibidas` : "—",
       extra: fallidas ? `${fallidas} ciudad(es) con error` : undefined,
       explicacion:
-        "Una petición HTTP por ciudad a la API histórica. Se guarda el JSON original sin tocar.",
+        "Pedimos a Open-Meteo el tiempo de cada hora de cada ciudad y guardamos la respuesta tal cual llega.",
+      tecnico:
+        "Una petición HTTP por ciudad a la API histórica · JSON original intacto.",
       duracionMs: ext?.duracionMs,
       pestana: "json",
     },
@@ -105,7 +110,8 @@ function calcularFases(etl: PipelineEtl): Fase[] {
         ? `${t.problemas.length} problema(s) estructural(es)`
         : undefined,
       explicacion:
-        "Los arrays paralelos (time, temperatura, humedad, precipitación) se convierten en una fila por ciudad y hora. Fechas interpretadas como UTC.",
+        "La respuesta trae listas separadas (horas, temperaturas…). Las juntamos en una fila por ciudad y hora.",
+      tecnico: "Arrays paralelos → registros · fechas interpretadas como UTC.",
       duracionMs: t?.duracionMs,
       pestana: "transformados",
     },
@@ -124,7 +130,9 @@ function calcularFases(etl: PipelineEtl): Fase[] {
         ? `${formatoEntero(l.rechazados.length)} rechazados por calidad`
         : undefined,
       explicacion:
-        "Se exigen números finitos (null nunca es 0), humedad 0–100 %, precipitación ≥ 0 y fecha válida. Se eliminan duplicados conservando el primero.",
+        "Apartamos las filas con datos vacíos, imposibles (humedad > 100 %, lluvia negativa) o repetidos.",
+      tecnico:
+        "Números finitos (null ≠ 0) · humedad 0–100 · precipitación ≥ 0 · sin duplicados.",
       duracionMs: l?.duracionMs,
       pestana: "validos",
     },
@@ -148,7 +156,9 @@ function calcularFases(etl: PipelineEtl): Fase[] {
         ? `${formatoEntero(etl.contadoresSeleccion.seleccionadosFueraDeFiltros)} seleccionados fuera de filtros (no se suben)`
         : undefined,
       explicacion:
-        "Tú decides qué se sube: filtros → orden → selección. Los registros excluidos aquí no son errores de calidad.",
+        "Tú eliges qué filas subir: filtra (por ciudad, fecha, temperatura…), ordena y márcalas.",
+      tecnico:
+        "Filtros → orden → selección · lo excluido aquí no es un error de calidad.",
       duracionMs: l ? etl.duracionFiltradoMs : undefined,
       pestana: "validos",
     },
@@ -169,7 +179,9 @@ function calcularFases(etl: PipelineEtl): Fase[] {
         ? `${formatoEntero(informe.registrosFallidos)} en lotes fallidos`
         : undefined,
       explicacion:
-        "Upsert por (ciudad, fecha_hora) en lotes de ≤ 500 desde el servidor. Después se comprueba que cada clave existe en Supabase.",
+        "Enviamos las filas elegidas a la base de datos en la nube y comprobamos que han llegado.",
+      tecnico:
+        "Upsert por (ciudad, fecha_hora) en lotes de ≤ 500 · verificación en destino.",
       duracionMs: carga?.duracionMs,
       pestana: "carga",
     },
@@ -191,7 +203,9 @@ export function Pipeline({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>2. Pipeline ETL</CardTitle>
+        <CardTitle className="hud-titulo text-sm">
+          Pipeline ETL · las 5 fases
+        </CardTitle>
         <CardDescription>
           Estados, contadores y duraciones reales de la última ejecución de cada
           fase.
@@ -206,8 +220,12 @@ export function Pipeline({
             >
               <article
                 className={cn(
-                  "flex min-w-0 flex-1 flex-col gap-2 rounded-lg border p-3",
-                  pestanaActiva === f.pestana && "ring-2 ring-ring/40"
+                  "neu-elevado flex min-w-0 flex-1 flex-col gap-2 rounded-lg border bg-background/40 p-3 transition-shadow",
+                  pestanaActiva === f.pestana && "ring-2 ring-ring/40",
+                  f.estado === "en_curso" &&
+                    "hud-escaneo border-primary/60 shadow-[0_0_18px_-4px_rgb(42_212_255/0.6)]",
+                  f.estado === "completada" && "border-emerald-500/40",
+                  f.estado === "error" && "border-destructive/50"
                 )}
                 aria-label={`Fase ${f.numero}: ${f.nombre}`}
               >
@@ -232,7 +250,10 @@ export function Pipeline({
                   </dd>
                 </dl>
                 {f.extra && <p className="text-xs font-medium">{f.extra}</p>}
-                <p className="text-xs text-muted-foreground">{f.explicacion}</p>
+                <p className="text-xs">{f.explicacion}</p>
+                <p className="font-mono text-[0.65rem] text-muted-foreground">
+                  {f.tecnico}
+                </p>
                 <Button
                   variant="outline"
                   size="xs"
@@ -289,7 +310,7 @@ export function Pipeline({
                 return (
                   <li
                     key={id}
-                    className="flex flex-col gap-1 rounded-md border p-2 text-xs"
+                    className="neu-elevado flex flex-col gap-1 rounded-md border p-2 text-xs"
                   >
                     <div className="flex items-center justify-between gap-1">
                       <span className="font-medium">{d.nombre}</span>

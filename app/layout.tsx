@@ -1,11 +1,17 @@
 import type { Metadata } from "next"
-import { Geist_Mono, Inter } from "next/font/google"
+import { Exo_2, Geist_Mono, Orbitron } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const fontSans = Exo_2({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-sans",
+})
+
+/** Tipografía de los títulos del HUD. */
+const fontHud = Orbitron({ subsets: ["latin"], variable: "--font-hud" })
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -13,9 +19,9 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Pipeline ETL · Open-Meteo → Supabase",
+  title: "NIMBUS · Centro de control ETL meteorológico",
   description:
-    "Práctica de Big Data: extracción, transformación, limpieza, filtrado y carga.",
+    "Práctica de Big Data: extracción, transformación, limpieza, filtrado y carga de datos de Open-Meteo en Supabase.",
 }
 
 export default function RootLayout({
@@ -30,12 +36,20 @@ export default function RootLayout({
       className={cn(
         "antialiased",
         fontMono.variable,
+        fontHud.variable,
         "font-sans",
-        inter.variable
+        fontSans.variable
       )}
     >
-      <body>
-        <ThemeProvider>{children}</ThemeProvider>
+      <body className="hud-fondo min-h-svh">
+        {/* Luces de ambiente que se ven desenfocadas a través de los paneles de cristal */}
+        <div className="hud-orbes" aria-hidden>
+          <span />
+          <span />
+          <span />
+        </div>
+        {/* La interfaz HUD está diseñada solo en oscuro. */}
+        <ThemeProvider forcedTheme="dark">{children}</ThemeProvider>
       </body>
     </html>
   )

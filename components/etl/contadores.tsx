@@ -45,7 +45,7 @@ export function Contadores({ etl }: { etl: PipelineEtl }) {
         <div
           key={i.etiqueta}
           className={cn(
-            "flex flex-col rounded-lg border bg-card p-3",
+            "neu-elevado flex flex-col rounded-lg border bg-card p-3",
             i.destacado &&
               "col-span-2 border-primary/40 bg-primary/5 sm:col-span-1"
           )}

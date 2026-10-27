@@ -34,22 +34,16 @@ export function Configuracion({ etl }: { etl: PipelineEtl }) {
     : 0
   const todas = config.ciudades.length === CIUDADES.length
 
-  const alternarCiudad = (id: string, marcada: boolean) =>
-    setConfig((c) => ({
-      ...c,
-      ciudades: marcada
-        ? CIUDADES.map((x) => x.id).filter(
-            (x) => x === id || c.ciudades.includes(x)
-          )
-        : c.ciudades.filter((x) => x !== id),
-    }))
+  const alternarCiudad = etl.alternarCiudadExtraccion
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>1. Configuración de extracción</CardTitle>
+        <CardTitle className="hud-titulo text-sm">Panel de descarga</CardTitle>
         <CardDescription>
-          API histórica de Open-Meteo · datos horarios en UTC · °C, % y mm
+          Elige ciudades y fechas, y pulsa «Extraer datos». Descargaremos el
+          tiempo de cada hora (UTC) desde Open-Meteo: temperatura en °C, humedad
+          en % y lluvia en mm.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -75,7 +69,7 @@ export function Configuracion({ etl }: { etl: PipelineEtl }) {
             {CIUDADES.map((c) => (
               <Label
                 key={c.id}
-                className="flex cursor-pointer items-start gap-2 rounded-md border p-2 font-normal has-data-checked:border-primary/50 has-data-checked:bg-muted/50"
+                className="cursor-mira neu-alternable flex items-start gap-2 rounded-md border p-2 font-normal has-data-checked:border-primary/50 has-data-checked:bg-muted/50"
               >
                 <Checkbox
                   checked={config.ciudades.includes(c.id)}
@@ -124,7 +118,7 @@ export function Configuracion({ etl }: { etl: PipelineEtl }) {
           </div>
         </div>
 
-        <dl className="grid grid-cols-3 gap-2 rounded-lg bg-muted/60 p-3 text-center">
+        <dl className="neu-hundido grid grid-cols-3 gap-2 rounded-lg bg-muted/60 p-3 text-center">
           <div>
             <dt className="text-xs text-muted-foreground">Ciudades</dt>
             <dd className="font-mono text-lg tabular-nums">

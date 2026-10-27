@@ -363,6 +363,20 @@ export function usePipelineEtl() {
     )
   }, [coinciden, alternarSeleccion])
 
+  /** Marca o desmarca una ciudad para la próxima extracción (mantiene el orden fijo). */
+  const alternarCiudadExtraccion = React.useCallback(
+    (id: string, marcada: boolean) =>
+      setConfig((c) => ({
+        ...c,
+        ciudades: marcada
+          ? CIUDADES.map((x) => x.id).filter(
+              (x) => x === id || c.ciudades.includes(x)
+            )
+          : c.ciudades.filter((x) => x !== id),
+      })),
+    []
+  )
+
   const vaciarSeleccion = React.useCallback(() => setSeleccion(new Set()), [])
   const restablecerFiltros = React.useCallback(() => {
     setFiltros(FILTROS_VACIOS)
@@ -416,6 +430,7 @@ export function usePipelineEtl() {
   return {
     config,
     setConfig,
+    alternarCiudadExtraccion,
     erroresConfig,
     extraccion,
     extraer,

@@ -95,7 +95,7 @@ export function TablaPaginada<T>({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="neu-hundido overflow-x-auto rounded-lg border">
         <Table aria-label={etiqueta}>
           <TableHeader className="bg-muted/50">
             <TableRow>

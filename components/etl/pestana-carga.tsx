@@ -121,7 +121,7 @@ function rango(registros: Medicion[]) {
 
 function TablaLotes({ lotes }: { lotes: Lote[] }) {
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="neu-hundido overflow-x-auto rounded-lg border">
       <Table aria-label="Estado de los lotes">
         <TableHeader className="bg-muted/50">
           <TableRow>

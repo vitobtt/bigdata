@@ -5,125 +5,633 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-sans);
-    --font-sans: var(--font-sans);
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
+  --font-heading: var(--font-hud);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* Tema HUD: fondo azul noche, acentos cian luminosos. La app fuerza este tema. */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+  color-scheme: dark;
+  --background: #040b12;
+  --foreground: #d6eef8;
+  --card: rgb(8 20 31 / 0.55);
+  --card-foreground: #d6eef8;
+  --popover: #0a1824;
+  --popover-foreground: #d6eef8;
+  --primary: #2ad4ff;
+  --primary-foreground: #021019;
+  --secondary: #0f2333;
+  --secondary-foreground: #cfeaf5;
+  --muted: #0d1e2b;
+  --muted-foreground: #8fb3c4;
+  --accent: #10293a;
+  --accent-foreground: #e2f6ff;
+  --destructive: #ff6b78;
+  --border: rgb(42 212 255 / 0.18);
+  --input: rgb(42 212 255 / 0.24);
+  --ring: rgb(42 212 255 / 0.6);
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
+  --chart-5: #d55181;
+  --sidebar: #08141f;
+  --sidebar-foreground: #d6eef8;
+  --sidebar-primary: #2ad4ff;
+  --sidebar-primary-foreground: #021019;
+  --sidebar-accent: #10293a;
+  --sidebar-accent-foreground: #e2f6ff;
+  --sidebar-border: rgb(42 212 255 / 0.18);
+  --sidebar-ring: rgb(42 212 255 / 0.6);
+  /* Ejes y rejilla de las gráficas */
+  --grafica-rejilla: rgb(143 179 196 / 0.14);
+  --grafica-eje: rgb(143 179 196 / 0.35);
+  /* Neumorfismo oscuro: luz suave arriba a la izquierda, sombra abajo a la derecha. */
+  --neu-luz: rgb(120 200 255 / 0.1);
+  --neu-sombra: rgb(0 0 0 / 0.8);
+  --neu-elevado: -6px -6px 14px var(--neu-luz), 8px 8px 18px var(--neu-sombra);
+  --neu-elevado-sm:
+    -4px -4px 9px var(--neu-luz), 5px 5px 11px var(--neu-sombra);
+  --neu-hundido:
+    inset 4px 4px 8px var(--neu-sombra), inset -3px -3px 8px var(--neu-luz);
+  --neu-foco: 0 0 0 3px rgb(42 212 255 / 0.55);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
   body {
     @apply bg-background text-foreground;
-    }
+  }
   html {
     @apply font-sans;
-    }
+  }
+}
+
+/* ---------- Elementos del HUD ---------- */
+@layer components {
+  /* Fondo: rejilla tenue + halo cian, fijo detrás de todo. */
+  .hud-fondo {
+    background-color: var(--background);
+    background-image:
+      radial-gradient(
+        ellipse 80% 50% at 50% -10%,
+        rgb(42 212 255 / 0.16),
+        transparent 70%
+      ),
+      linear-gradient(rgb(42 212 255 / 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(42 212 255 / 0.045) 1px, transparent 1px);
+    background-size:
+      100% 100%,
+      32px 32px,
+      32px 32px;
+    background-attachment: fixed;
+  }
+
+  /* Panel holográfico con esquinas marcadas. */
+  .hud-panel {
+    position: relative;
+    /* Glassmorphism: reflejo diagonal + desenfoque de lo que hay detrás. */
+    background-image: linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.07),
+      rgb(255 255 255 / 0.01) 45%,
+      rgb(42 212 255 / 0.03)
+    );
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.1),
+      inset 0 0 0 1px rgb(42 212 255 / 0.16),
+      0 0 32px -12px rgb(42 212 255 / 0.35),
+      var(--neu-elevado);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    backdrop-filter: blur(18px) saturate(160%);
+  }
+  .hud-panel::before,
+  .hud-panel::after {
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    pointer-events: none;
+    border-color: var(--primary);
+    opacity: 0.8;
+  }
+  .hud-panel::before {
+    top: 0;
+    left: 0;
+    border-top: 2px solid;
+    border-left: 2px solid;
+    border-top-left-radius: inherit;
+  }
+  .hud-panel::after {
+    right: 0;
+    bottom: 0;
+    border-right: 2px solid;
+    border-bottom: 2px solid;
+    border-bottom-right-radius: inherit;
+  }
+
+  .hud-titulo {
+    font-family: var(--font-hud), var(--font-sans), sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .hud-brillo {
+    color: var(--primary);
+    text-shadow: 0 0 14px rgb(42 212 255 / 0.55);
+  }
+
+  /* Barra que recorre un elemento mientras una fase está realmente en curso. */
+  .hud-escaneo {
+    position: relative;
+    overflow: hidden;
+  }
+  .hud-escaneo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(42 212 255 / 0.18),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: hud-escaneo 1.6s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Pulso de los marcadores del mapa. */
+  .hud-pulso {
+    animation: hud-pulso 1.8s ease-out infinite;
+    transform-origin: center;
+    transform-box: fill-box;
+  }
+}
+
+/* Marcadores HTML del mapa de MapTiler (mismo lenguaje que el mapa esquemático). */
+@layer components {
+  .mapa-marcador {
+    display: grid;
+    grid-template-columns: 18px auto;
+    grid-template-rows: auto auto;
+    column-gap: 6px;
+    align-items: center;
+    padding: 2px;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    color: var(--foreground);
+    text-align: left;
+    font-family: var(--font-sans), sans-serif;
+  }
+  .mapa-marcador:disabled {
+    cursor: not-allowed;
+  }
+  .mapa-marcador:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  .mapa-marcador-punto {
+    grid-row: span 2;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: var(--color-ciudad);
+    border: 2px solid var(--background);
+    box-shadow:
+      0 0 0 1.5px var(--color-ciudad),
+      0 0 12px var(--color-ciudad);
+  }
+  .mapa-marcador[data-estado="inactiva"] .mapa-marcador-punto {
+    background: var(--background);
+    box-shadow: 0 0 0 1.5px var(--color-ciudad);
+  }
+  .mapa-marcador[data-estado="error"] .mapa-marcador-punto {
+    box-shadow: 0 0 0 2px var(--destructive);
+  }
+  .mapa-marcador[data-estado="descargando"] .mapa-marcador-punto {
+    animation: mapa-latido 1s ease-in-out infinite alternate;
+  }
+  .mapa-marcador-nombre {
+    font-size: 13px;
+    font-weight: 600;
+    text-shadow: 0 1px 3px #000;
+  }
+  .mapa-marcador-dato {
+    font-family: var(--font-mono), monospace;
+    font-size: 11px;
+    color: var(--muted-foreground);
+    text-shadow: 0 1px 3px #000;
+  }
+}
+
+@keyframes mapa-latido {
+  to {
+    box-shadow:
+      0 0 0 6px transparent,
+      0 0 18px var(--color-ciudad);
+  }
+}
+
+@keyframes hud-escaneo {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes hud-pulso {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-escaneo::after,
+  .hud-pulso,
+  .mapa-marcador[data-estado="descargando"] .mapa-marcador-punto {
+    animation: none;
+  }
+}
+
+/* ---------- Mira de apuntado para seleccionar ciudades ---------- */
+:root {
+  --cursor-mira:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'><g fill='none' stroke='%23000' stroke-opacity='.6' stroke-width='3.5'><circle cx='16' cy='16' r='9'/><path d='M16 1v8M16 23v8M1 16h8M23 16h8'/></g><g fill='none' stroke='%232ad4ff' stroke-width='1.5'><circle cx='16' cy='16' r='9'/><path d='M16 1v8M16 23v8M1 16h8M23 16h8'/></g><circle cx='16' cy='16' r='1.6' fill='%23ff4d5e'/></svg>")
+      16 16,
+    crosshair;
+}
+
+@layer components {
+  /* Toda la zona de selección muestra la mira, también el lienzo de MapLibre. */
+  .cursor-mira,
+  .cursor-mira *,
+  .cursor-mira .maplibregl-canvas-container.maplibregl-interactive,
+  .cursor-mira .maplibregl-canvas {
+    cursor: var(--cursor-mira) !important;
+  }
+  .cursor-mira [aria-disabled="true"],
+  .cursor-mira :disabled,
+  .cursor-mira [data-disabled] {
+    cursor: not-allowed !important;
+  }
+
+  /* Recuadro de «objetivo fijado»: aparece al apuntar o al enfocar con teclado. */
+  .mira-objetivo {
+    opacity: 0;
+    transform-box: fill-box;
+    transform-origin: center;
+    pointer-events: none;
+  }
+  .ciudad-objetivo:hover .mira-objetivo,
+  .ciudad-objetivo:focus-visible .mira-objetivo {
+    opacity: 1;
+    animation:
+      mira-fijar 0.35s ease-out,
+      mira-girar 6s linear 0.35s infinite;
+  }
+
+  /* Versión HTML para los marcadores de MapTiler. */
+  .mapa-marcador {
+    position: relative;
+  }
+  .mapa-marcador-mira {
+    position: absolute;
+    left: -6px;
+    top: 50%;
+    width: 30px;
+    height: 30px;
+    margin-top: -15px;
+    opacity: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(var(--primary), var(--primary)) top left / 9px 2px,
+      linear-gradient(var(--primary), var(--primary)) top left / 2px 9px,
+      linear-gradient(var(--primary), var(--primary)) top right / 9px 2px,
+      linear-gradient(var(--primary), var(--primary)) top right / 2px 9px,
+      linear-gradient(var(--primary), var(--primary)) bottom left / 9px 2px,
+      linear-gradient(var(--primary), var(--primary)) bottom left / 2px 9px,
+      linear-gradient(var(--primary), var(--primary)) bottom right / 9px 2px,
+      linear-gradient(var(--primary), var(--primary)) bottom right / 2px 9px;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 0 4px rgb(42 212 255 / 0.8));
+  }
+  .mapa-marcador:not(:disabled):hover .mapa-marcador-mira,
+  .mapa-marcador:focus-visible .mapa-marcador-mira {
+    opacity: 1;
+    animation:
+      mira-fijar 0.35s ease-out,
+      mira-girar 6s linear 0.35s infinite;
+  }
+}
+
+@keyframes mira-fijar {
+  from {
+    opacity: 0;
+    transform: scale(1.8) rotate(-45deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+@keyframes mira-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ciudad-objetivo:hover .mira-objetivo,
+  .ciudad-objetivo:focus-visible .mira-objetivo,
+  .mapa-marcador:hover .mapa-marcador-mira,
+  .mapa-marcador:focus-visible .mapa-marcador-mira {
+    animation: none;
+  }
+}
+
+/* ---------- Neumorfismo ----------
+ * Fuera de las capas de Tailwind a propósito: así gana a las sombras de las
+ * utilidades. Cada estado con foco incluye el anillo de foco en la misma
+ * sombra para no perder la indicación de teclado. */
+
+/* Superficies en relieve y hundidas reutilizables */
+.neu-elevado {
+  background-image: linear-gradient(
+    145deg,
+    rgb(16 36 52 / 0.55),
+    rgb(4 12 20 / 0.35)
+  );
+  box-shadow: var(--neu-elevado-sm);
+}
+.neu-hundido {
+  box-shadow: var(--neu-hundido);
+}
+/* Una fase en curso conserva su brillo cian sobre el relieve */
+.neu-elevado.hud-escaneo {
+  box-shadow:
+    0 0 18px -4px rgb(42 212 255 / 0.6),
+    var(--neu-elevado-sm);
+}
+/* Opción que se «hunde» al activarse (p. ej. ciudades marcadas) */
+.neu-alternable {
+  box-shadow: var(--neu-elevado-sm);
+  transition: box-shadow 0.15s ease;
+}
+.neu-alternable:has([data-checked]) {
+  box-shadow: var(--neu-hundido);
+}
+
+/* Botones: en relieve; al pulsar o si están activados, hundidos */
+[data-slot="button"]:is(
+  [data-variant="default"],
+  [data-variant="outline"],
+  [data-variant="secondary"],
+  [data-variant="destructive"]
+) {
+  box-shadow: var(--neu-elevado-sm);
+  transition:
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+}
+[data-slot="button"][data-variant="default"] {
+  box-shadow:
+    0 0 16px -4px rgb(42 212 255 / 0.55),
+    var(--neu-elevado-sm);
+}
+[data-slot="button"]:is(
+    [data-variant="default"],
+    [data-variant="outline"],
+    [data-variant="secondary"],
+    [data-variant="destructive"]
+  ):is(:active, [aria-pressed="true"], [aria-selected="true"]) {
+  box-shadow: var(--neu-hundido);
+}
+[data-slot="button"]:is(
+    [data-variant="default"],
+    [data-variant="outline"],
+    [data-variant="secondary"],
+    [data-variant="destructive"]
+  ):focus-visible {
+  box-shadow: var(--neu-foco), var(--neu-elevado-sm);
+}
+[data-slot="button"]:disabled {
+  box-shadow: none;
+}
+
+/* Campos: hundidos */
+[data-slot="input"],
+[data-slot="select-trigger"] {
+  box-shadow: var(--neu-hundido);
+  border-color: transparent;
+  background-color: rgb(3 10 17 / 0.6);
+}
+[data-slot="input"]:focus-visible,
+[data-slot="select-trigger"]:focus-visible {
+  box-shadow: var(--neu-foco), var(--neu-hundido);
+}
+
+/* Casillas: hundidas sin marcar; al marcar, botón cian en relieve */
+[data-slot="checkbox"] {
+  box-shadow:
+    inset 2px 2px 4px var(--neu-sombra),
+    inset -1px -1px 3px var(--neu-luz);
+}
+[data-slot="checkbox"][data-checked] {
+  box-shadow:
+    0 0 8px -1px rgb(42 212 255 / 0.6),
+    2px 2px 4px var(--neu-sombra);
+}
+[data-slot="checkbox"]:focus-visible {
+  box-shadow: var(--neu-foco);
+}
+
+/* Pestañas: canal hundido con la pestaña activa en relieve */
+[data-slot="tabs-list"][data-variant="default"] {
+  box-shadow: var(--neu-hundido);
+  background-color: rgb(3 10 17 / 0.6);
+}
+[data-slot="tabs-trigger"][data-active] {
+  box-shadow: var(--neu-elevado-sm);
+  background-image: linear-gradient(145deg, rgb(20 44 62), rgb(9 22 33));
+  color: var(--primary);
+}
+[data-slot="tabs-trigger"]:focus-visible {
+  box-shadow: var(--neu-foco);
+}
+
+@media (forced-colors: active) {
+  .neu-elevado,
+  .neu-hundido,
+  .neu-alternable,
+  [data-slot="button"],
+  [data-slot="input"],
+  [data-slot="select-trigger"] {
+    box-shadow: none;
+    border: 1px solid CanvasText;
+  }
+}
+
+/* ---------- Glassmorphism ---------- */
+
+/* Luces de ambiente fijas detrás de todo: es lo que el cristal desenfoca. */
+.hud-orbes {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hud-orbes span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(50px);
+  opacity: 0.9;
+  animation: orbe-deriva 28s ease-in-out infinite alternate;
+}
+.hud-orbes span:nth-child(1) {
+  width: 46vw;
+  height: 46vw;
+  left: -10vw;
+  top: 8vh;
+  background: radial-gradient(circle, rgb(42 212 255 / 0.45), transparent 62%);
+}
+.hud-orbes span:nth-child(2) {
+  width: 40vw;
+  height: 40vw;
+  right: -8vw;
+  top: 30vh;
+  background: radial-gradient(circle, rgb(57 135 229 / 0.55), transparent 62%);
+  animation-duration: 34s;
+  animation-direction: alternate-reverse;
+}
+.hud-orbes span:nth-child(3) {
+  width: 34vw;
+  height: 34vw;
+  left: 35vw;
+  bottom: -12vh;
+  background: radial-gradient(circle, rgb(144 133 233 / 0.5), transparent 62%);
+  animation-duration: 40s;
+}
+@keyframes orbe-deriva {
+  to {
+    transform: translate(6vw, -5vh) scale(1.12);
+  }
+}
+
+/* Cristal reutilizable para superficies flotantes (tooltips, menús, avisos). */
+.vidrio {
+  background-color: rgb(10 26 40 / 0.55);
+  background-image: linear-gradient(
+    135deg,
+    rgb(255 255 255 / 0.08),
+    rgb(255 255 255 / 0.01) 50%
+  );
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 10px 30px -10px rgb(0 0 0 / 0.7);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+}
+/* Menús desplegables (Select) también de cristal */
+[data-slot="select-content"] {
+  background-color: rgb(10 26 40 / 0.6) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hud-orbes span {
+    animation: none;
+  }
+}
+/* Si el navegador no desenfoca, los paneles vuelven a ser casi opacos para que el texto se lea. */
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .dark {
+    --card: rgb(8 20 31 / 0.92);
+  }
+  .vidrio {
+    background-color: rgb(10 26 40 / 0.95);
+  }
 }

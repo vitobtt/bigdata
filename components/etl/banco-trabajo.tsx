@@ -7,9 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePipelineEtl } from "@/hooks/use-pipeline-etl"
 import { formatoEntero } from "@/lib/formato"
+import { ComoFunciona, Reactor, RelojUtc } from "./cabecera"
 import { Configuracion } from "./configuracion"
 import { Contadores } from "./contadores"
 import { InsigniaEstado } from "./estado"
+import { Graficas } from "./graficas"
+import { Mapa } from "./mapa"
 import { PestanaCarga } from "./pestana-carga"
 import { PestanaJson } from "./pestana-json"
 import { PestanaRechazados } from "./pestana-rechazados"
@@ -36,59 +39,74 @@ export function BancoTrabajo() {
 
   return (
     <div className="mx-auto flex w-full max-w-[96rem] flex-col gap-4 px-4 py-6 sm:px-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Big Data · Práctica 1
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Pipeline ETL: Open-Meteo → Supabase
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Extrae datos horarios, transfórmalos, límpialos, decide qué subir y
-            comprueba qué ha quedado guardado.
-          </p>
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
+        <div className="flex items-center gap-4">
+          <Reactor activo={!!etl.extraccion?.enCurso || !!etl.carga?.enCurso} />
+          <div>
+            <p className="hud-titulo text-[0.65rem] text-muted-foreground">
+              Big Data · Práctica 1 · Centro de control ETL
+            </p>
+            <h1 className="hud-titulo hud-brillo text-2xl font-bold sm:text-3xl">
+              Nimbus
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Descarga el tiempo de cinco ciudades, revisa los datos y guárdalos
+              en una base de datos en la nube.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5">
-            <ShieldAlertIcon className="size-3.5" aria-hidden /> Sin
-            autenticación: solo desarrollo local
-          </span>
-          {s.cargando ? (
-            <InsigniaEstado estado="en_curso" etiqueta="Comprobando Supabase" />
-          ) : !s.configurado ? (
-            <InsigniaEstado
-              estado="pendiente"
-              etiqueta="Supabase sin configurar"
-            />
-          ) : s.conectado ? (
-            <InsigniaEstado
-              estado="completada"
-              etiqueta={`Supabase conectado · ${s.totalRegistros == null ? "?" : formatoEntero(s.totalRegistros)} filas`}
-            />
-          ) : (
-            <InsigniaEstado
-              estado="error"
-              etiqueta="Supabase: error de acceso"
-            />
-          )}
+        <div className="flex flex-col items-end gap-2 text-xs">
+          <RelojUtc />
+          <div className="flex flex-wrap justify-end gap-2">
+            <span className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-muted-foreground">
+              <ShieldAlertIcon className="size-3.5" aria-hidden /> Sin login:
+              uso en clase
+            </span>
+            {s.cargando ? (
+              <InsigniaEstado
+                estado="en_curso"
+                etiqueta="Comprobando Supabase"
+              />
+            ) : !s.configurado ? (
+              <InsigniaEstado
+                estado="pendiente"
+                etiqueta="Supabase sin configurar"
+              />
+            ) : s.conectado ? (
+              <InsigniaEstado
+                estado="completada"
+                etiqueta={`Supabase conectado · ${s.totalRegistros == null ? "?" : formatoEntero(s.totalRegistros)} filas guardadas`}
+              />
+            ) : (
+              <InsigniaEstado
+                estado="error"
+                etiqueta="Supabase: error de acceso"
+              />
+            )}
+          </div>
         </div>
       </header>
+
+      <ComoFunciona />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <aside className="lg:sticky lg:top-4 lg:self-start">
           <Configuracion etl={etl} />
         </aside>
         <main className="flex min-w-0 flex-col gap-4">
+          <Mapa etl={etl} />
           <Pipeline
             etl={etl}
             onInspeccionar={inspeccionar}
             pestanaActiva={pestana}
           />
           <Contadores etl={etl} />
+          <Graficas etl={etl} verTabla={() => inspeccionar("validos")} />
           <Card ref={inspeccionRef} className="scroll-mt-4">
             <CardHeader>
-              <CardTitle>3. Inspección de datos</CardTitle>
+              <CardTitle className="hud-titulo text-sm">
+                Inspección de datos
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs

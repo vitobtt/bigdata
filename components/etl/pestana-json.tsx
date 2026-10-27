@@ -88,7 +88,7 @@ export function PestanaJson({ etl }: { etl: PipelineEtl }) {
       </p>
       <pre
         className={cn(
-          "max-h-[28rem] overflow-auto rounded-lg border bg-muted/40 p-3 font-mono text-xs"
+          "neu-hundido max-h-[28rem] overflow-auto rounded-lg border bg-muted/40 p-3 font-mono text-xs"
         )}
         tabIndex={0}
         aria-label={`JSON original de ${d.nombre}`}

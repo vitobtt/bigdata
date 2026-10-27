@@ -32,6 +32,7 @@ cp .env.example .env.local   # en Windows: copy .env.example .env.local
 | `SUPABASE_SERVICE_ROLE_KEY` | (opcional) clave `service_role` heredada (JWT) | Alternativa si el proyecto aún usa claves heredadas |
 | `NEXT_PUBLIC_SUPABASE_URL` | La misma URL del proyecto | Pareja de la clave publicable |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Project Settings → API Keys → *Publishable key* (`sb_publishable_…`) | Clave para el navegador. **No es secreta** y la carga no la usa |
+| `NEXT_PUBLIC_MAPTILER_KEY` | cloud.maptiler.com → Account → API keys | Mapa interactivo (opcional). Es pública: restríngela por dominio en MapTiler |
 | `ETL_PERMITIR_ESCRITURA` | — | Ver el apartado [Seguridad](#seguridad) |
 
 Nunca pongas el prefijo `NEXT_PUBLIC_` a `SUPABASE_URL` ni a la clave secreta: Next.js incluiría
@@ -54,6 +55,24 @@ npm run typecheck
 npm run lint
 npm run build
 ```
+
+## La interfaz
+
+La pantalla tiene un estilo de panel de control (HUD) y está pensada para que se entienda sin
+conocer el tema:
+
+- **Cómo funciona, en 5 pasos**: el proceso explicado en lenguaje sencillo.
+- **Mapa de estaciones**: las cinco ciudades con su estado (lista, descargando, datos recibidos,
+  error) y su resumen (temperatura mínima y máxima, humedad y lluvia). Al pulsar una ciudad se
+  añade o se quita de la próxima descarga.
+  - Con `NEXT_PUBLIC_MAPTILER_KEY` se usa MapTiler (estilo *dataviz* oscuro).
+  - Sin clave, o si la clave falla, se muestra un mapa esquemático de España (contorno de
+    Natural Earth).
+- **Pipeline**: cada fase explica qué hace en lenguaje sencillo y, debajo, en términos técnicos.
+- **Lectura de los datos**: temperatura hora a hora por ciudad (pasa el ratón para ver los
+  valores) y lluvia acumulada por ciudad. Las gráficas muestran solo los registros que cumplen
+  los filtros. Cada ciudad tiene siempre el mismo color, el mismo en el mapa y en las gráficas;
+  la paleta se ha validado para daltonismo.
 
 ## El pipeline
 
