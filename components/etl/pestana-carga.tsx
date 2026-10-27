@@ -61,10 +61,11 @@ function EstadoSupabaseAviso({ etl }: { etl: PipelineEtl }) {
         </AlertTitle>
         <AlertDescription>
           <p>
-            Crea <code>.env.local</code> a partir de <code>.env.example</code>{" "}
-            con <code>SUPABASE_URL</code> y <code>SUPABASE_SECRET_KEY</code>{" "}
-            (sin prefijo <code>NEXT_PUBLIC_</code>), ejecuta la migración y
-            reinicia el servidor. No se simula ninguna carga.
+            Define <code>SUPABASE_URL</code> y <code>SUPABASE_SECRET_KEY</code>{" "}
+            (sin prefijo <code>NEXT_PUBLIC_</code>): en local, en{" "}
+            <code>.env.local</code> (a partir de <code>.env.example</code>); en
+            Vercel, en <i>Settings → Environment Variables</i>, y vuelve a
+            desplegar. Ejecuta también la migración. No se simula ninguna carga.
           </p>
         </AlertDescription>
       </Alert>

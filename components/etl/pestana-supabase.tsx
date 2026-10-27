@@ -165,7 +165,7 @@ export function PestanaSupabase({ etl }: { etl: PipelineEtl }) {
         <AlertDescription>
           {etl.supabase.cargando
             ? "Comprobando configuración…"
-            : "Configura SUPABASE_URL y SUPABASE_SECRET_KEY en .env.local para leer los datos persistidos."}
+            : "Configura SUPABASE_URL y SUPABASE_SECRET_KEY para leer los datos persistidos: en local, en .env.local; en Vercel, en Settings → Environment Variables (y vuelve a desplegar)."}
         </AlertDescription>
       </Alert>
     )

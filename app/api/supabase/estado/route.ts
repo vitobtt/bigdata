@@ -13,7 +13,7 @@ export async function GET() {
     return Response.json({
       configurado: false,
       conectado: false,
-      mensaje: "Faltan SUPABASE_URL y SUPABASE_SECRET_KEY en .env.local.",
+      mensaje: "Faltan SUPABASE_URL y SUPABASE_SECRET_KEY (en .env.local en local, o en Environment Variables si está desplegada en Vercel).",
     })
   }
   try {

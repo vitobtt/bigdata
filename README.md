@@ -30,10 +30,16 @@ cp .env.example .env.local   # en Windows: copy .env.example .env.local
 | `SUPABASE_URL` | Project Settings → Data API | URL del proyecto |
 | `SUPABASE_SECRET_KEY` | Project Settings → API Keys → *Secret key* (`sb_secret_…`) | Lectura y escritura **solo desde el servidor** |
 | `SUPABASE_SERVICE_ROLE_KEY` | (opcional) clave `service_role` heredada (JWT) | Alternativa si el proyecto aún usa claves heredadas |
+| `NEXT_PUBLIC_SUPABASE_URL` | La misma URL del proyecto | Pareja de la clave publicable |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Project Settings → API Keys → *Publishable key* (`sb_publishable_…`) | Clave para el navegador. **No es secreta** y la carga no la usa |
 | `ETL_PERMITIR_ESCRITURA` | — | Ver el apartado [Seguridad](#seguridad) |
 
-No uses nunca el prefijo `NEXT_PUBLIC_` para estas variables: Next.js las incluiría en el código
-que se envía al navegador.
+Nunca pongas el prefijo `NEXT_PUBLIC_` a `SUPABASE_URL` ni a la clave secreta: Next.js incluiría
+esas variables en el código que se envía al navegador. Solo la clave publicable lleva ese prefijo,
+porque está pensada para el navegador.
+
+Con la clave publicable se puede comprobar que la tabla está protegida: una petición de lectura o
+escritura a `/rest/v1/mediciones_meteorologicas` con esa clave recibe «permission denied».
 
 Sin credenciales, la aplicación funciona igualmente hasta la vista previa de la carga. El botón de
 subida queda deshabilitado y la pantalla indica lo que falta. Nunca se simula una carga.
