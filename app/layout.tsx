@@ -1,20 +1,35 @@
 import type { Metadata } from "next"
-import { Exo_2, Geist_Mono, Orbitron } from "next/font/google"
+import { Inter, Michroma, Rajdhani, Share_Tech_Mono } from "next/font/google"
 
 import "./globals.css"
+import { EfectosHud } from "@/components/hud/efectos-hud"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 
-const fontSans = Exo_2({
+/** Texto corrido y formularios: sans serif de máxima legibilidad. */
+const fontSans = Inter({
   subsets: ["latin", "latin-ext"],
   variable: "--font-sans",
 })
 
-/** Tipografía de los títulos del HUD. */
-const fontHud = Orbitron({ subsets: ["latin"], variable: "--font-hud" })
+/** Identidad Stark Industries: logotipo, encabezados y títulos de sección. */
+const fontHud = Michroma({
+  subsets: ["latin", "latin-ext"],
+  weight: "400",
+  variable: "--font-hud",
+})
 
-const fontMono = Geist_Mono({
+/** Datos y métricas (JARVIS): Rajdhani Light, Regular y Medium. */
+const fontNum = Rajdhani({
   subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-num",
+})
+
+/** Datos técnicos, códigos y etiquetas: Share Tech Mono. */
+const fontMono = Share_Tech_Mono({
+  subsets: ["latin"],
+  weight: "400",
   variable: "--font-mono",
 })
 
@@ -37,6 +52,7 @@ export default function RootLayout({
         "antialiased",
         fontMono.variable,
         fontHud.variable,
+        fontNum.variable,
         "font-sans",
         fontSans.variable
       )}
@@ -48,6 +64,9 @@ export default function RootLayout({
           <span />
           <span />
         </div>
+        {/* Progreso de scroll (CSS puro) y microinteracciones globales */}
+        <div className="hud-progreso" aria-hidden />
+        <EfectosHud />
         {/* La interfaz HUD está diseñada solo en oscuro. */}
         <ThemeProvider forcedTheme="dark">{children}</ThemeProvider>
       </body>

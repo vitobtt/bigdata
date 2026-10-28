@@ -9,70 +9,22 @@ import {
   TableIcon,
 } from "lucide-react"
 
-import { cn } from "@/lib/utils"
 
-/** Radar decorativo: gira más rápido mientras hay una descarga o una carga en curso. */
+/** Giroscopio 3D decorativo: anillos en ejes distintos; gira más rápido durante una descarga o carga. */
 export function Reactor({ activo }: { activo: boolean }) {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      className="size-14 shrink-0 text-primary drop-shadow-[0_0_10px_rgb(42_212_255/0.6)]"
+    <div
+      className="hud-reactor"
+      data-activo={activo ? "" : undefined}
       aria-hidden
     >
-      <circle
-        cx="32"
-        cy="32"
-        r="30"
-        fill="none"
-        stroke="currentColor"
-        strokeOpacity="0.25"
-      />
-      <g
-        className={cn(
-          "origin-center",
-          activo
-            ? "motion-safe:animate-[spin_2s_linear_infinite]"
-            : "motion-safe:animate-[spin_14s_linear_infinite]"
-        )}
-      >
-        <circle
-          cx="32"
-          cy="32"
-          r="25"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeDasharray="10 6"
-        />
-      </g>
-      <g
-        className={cn(
-          "origin-center",
-          activo
-            ? "motion-safe:animate-[spin_3s_linear_infinite_reverse]"
-            : "motion-safe:animate-[spin_20s_linear_infinite_reverse]"
-        )}
-      >
-        <circle
-          cx="32"
-          cy="32"
-          r="18"
-          fill="none"
-          stroke="currentColor"
-          strokeOpacity="0.7"
-          strokeDasharray="2 4"
-        />
-      </g>
-      <circle
-        cx="32"
-        cy="32"
-        r="9"
-        fill="currentColor"
-        fillOpacity="0.2"
-        stroke="currentColor"
-      />
-      <circle cx="32" cy="32" r="4" fill="currentColor" />
-    </svg>
+      <div className="hud-reactor-giro">
+        <span className="hud-anillo hud-anillo-a" />
+        <span className="hud-anillo hud-anillo-b" />
+        <span className="hud-anillo hud-anillo-c" />
+        <span className="hud-nucleo" />
+      </div>
+    </div>
   )
 }
 
@@ -89,7 +41,7 @@ export function RelojUtc() {
     () => null
   )
   return (
-    <p className="font-mono text-sm tabular-nums" aria-label="Hora UTC actual">
+    <p className="num-principal text-lg" aria-label="Hora UTC actual">
       <span className="hud-titulo mr-2 text-[0.65rem] text-muted-foreground">
         UTC
       </span>
@@ -147,7 +99,8 @@ export function ComoFunciona() {
         {PASOS.map((p, i) => (
           <li
             key={p.titulo}
-            className="neu-elevado flex gap-2 rounded-lg bg-background/40 p-2"
+            data-tilt
+            className="neu-elevado hud-inclinable flex gap-2 rounded-lg bg-background/40 p-2"
           >
             <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-primary/50 font-mono text-xs text-primary">
               {i + 1}

@@ -181,7 +181,7 @@ function GraficaTemperatura({ filas }: { filas: Medicion[] }) {
                   x={m.izq - 6}
                   y={y(v) + 3}
                   textAnchor="end"
-                  className="fill-muted-foreground font-mono text-[10px] tabular-nums"
+                  className="fill-muted-foreground num-secundario text-[10px]"
                 >
                   {v}
                 </text>
@@ -281,7 +281,7 @@ function GraficaTemperatura({ filas }: { filas: Medicion[] }) {
                     />
                     {c}
                   </span>
-                  <span className="font-mono tabular-nums">
+                  <span className="num-secundario">
                     {formatoDecimal(p.v)} °C
                   </span>
                 </li>
@@ -367,7 +367,7 @@ function GraficaLluvia({ filas }: { filas: Medicion[] }) {
                 <text
                   x={etiquetaAncho + w + 8}
                   y={yc + 4}
-                  className="fill-foreground font-mono text-[11px] tabular-nums"
+                  className="fill-foreground num-secundario text-[11px]"
                 >
                   {formatoDecimal(s.lluviaTotal, 1)} mm
                   <tspan className="fill-muted-foreground">
@@ -396,7 +396,7 @@ export function Graficas({
   if (etl.validos.length === 0) return null
 
   return (
-    <Card>
+    <Card className="plano-2">
       <CardHeader>
         <CardTitle className="hud-titulo flex items-center gap-2 text-sm">
           <ChartLineIcon className="size-4 text-primary" aria-hidden />

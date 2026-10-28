@@ -3,15 +3,7 @@
 import "@maptiler/sdk/dist/maptiler-sdk.css"
 
 import * as React from "react"
-import { MapPinnedIcon } from "lucide-react"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import type { PipelineEtl } from "@/hooks/use-pipeline-etl"
 import { CIUDADES, type Ciudad } from "@/lib/etl/ciudades"
 import {
@@ -19,17 +11,23 @@ import {
   estadisticasPorCiudad,
   type EstadisticasCiudad,
 } from "@/lib/etl/estadisticas"
-import { formatoDecimal, formatoEntero } from "@/lib/formato"
-import {
-  MAPA_ESQUEMA,
-  TRAZADO_ESPANA,
-  TRAZADO_VECINOS,
-  proyectar,
-} from "@/lib/mapa/espana"
+import { formatoDecimal } from "@/lib/formato"
+import { COMUNIDADES } from "@/lib/mapa/comunidades"
+import { MAPA_ESQUEMA, TRAZADO_VECINOS, proyectar } from "@/lib/mapa/espana"
 import { cn } from "@/lib/utils"
-import { InsigniaEstado, type Estado } from "./estado"
+import type { Estado } from "./estado"
+import { LenteAtmosferica } from "./lente"
 
 /** Nombres con los que aparecen nuestras ciudades en OpenStreetMap. */
+/** Comunidad autónoma de cada ciudad (id de lib/mapa/comunidades). */
+const COMUNIDAD_DE_CIUDAD: Record<string, string> = {
+  barcelona: "cataluna",
+  madrid: "madrid",
+  sevilla: "andalucia",
+  bilbao: "pais-vasco",
+  valencia: "valencia",
+}
+
 const NOMBRES_EN_MAPA = [
   "Barcelona",
   "Madrid",
@@ -99,34 +97,84 @@ function etiquetaAccesible(i: InfoCiudad, marcada: boolean) {
   return `${i.ciudad.nombre}: ${TEXTO_ESTADO[i.estado][1]}${temp}. ${accion}.`
 }
 
+/** Desplazamiento de la etiqueta de cada ciudad: lado (1 = derecha) y vertical (1 = abajo). */
+const COLOCACION: Record<string, { lado: 1 | -1; vert: 1 | -1 }> = {
+  barcelona: { lado: -1, vert: 1 },
+  madrid: { lado: -1, vert: -1 },
+  sevilla: { lado: 1, vert: 1 },
+  bilbao: { lado: 1, vert: -1 },
+  valencia: { lado: 1, vert: 1 },
+}
+
+/** Centro de la lente en el escenario: esquina inferior derecha del mapa. */
+const CENTRO_LENTE: [number, number] = [516, 386]
+const RADIO_LENTE = 78
+
+function coordenadaTecnica(c: Ciudad) {
+  const ns = c.latitud >= 0 ? "N" : "S"
+  const eo = c.longitud >= 0 ? "E" : "O"
+  return `${Math.abs(c.latitud).toFixed(2)}°${ns} ${Math.abs(c.longitud).toFixed(2)}°${eo}`
+}
+
 /** Mapa esquemático en SVG: se usa cuando no hay clave de MapTiler. */
 function MapaEsquema({
   info,
   marcadas,
   alternar,
   bloqueado,
+  foco,
+  alFocar,
 }: {
   info: InfoCiudad[]
   marcadas: string[]
   alternar: (id: string) => void
   bloqueado: boolean
+  foco: string
+  alFocar: (id: string) => void
 }) {
   const { ancho, alto } = MAPA_ESQUEMA
   // Retícula cada 2 grados, como en un visor de coordenadas.
   const meridianos = [-8, -6, -4, -2, 0, 2, 4]
   const paralelos = [36, 38, 40, 42, 44]
+  const enfocada = info.find((i) => i.ciudad.id === foco)
+
+  // Enlace vectorial entre el nodo enfocado y el borde de la lente.
+  let enlace: { trazo: string; punta: [number, number] } | null = null
+  if (enfocada) {
+    const [x, y] = proyectar(enfocada.ciudad.longitud, enfocada.ciudad.latitud)
+    const dx = CENTRO_LENTE[0] - x
+    const dy = CENTRO_LENTE[1] - y
+    const d = Math.hypot(dx, dy) || 1
+    const ex = CENTRO_LENTE[0] - (dx / d) * RADIO_LENTE
+    const ey = CENTRO_LENTE[1] - (dy / d) * RADIO_LENTE
+    const sx = x + (dx / d) * 14
+    const sy = y + (dy / d) * 14
+    enlace = {
+      trazo: `M${sx.toFixed(1)},${sy.toFixed(1)}L${ex.toFixed(1)},${ey.toFixed(1)}`,
+      punta: [ex, ey],
+    }
+  }
+
   return (
     <svg
       viewBox={`0 0 ${ancho} ${alto}`}
-      className="cursor-mira h-auto w-full"
+      className="cursor-mira mapa-esquema h-auto w-full"
       role="group"
       aria-label="Mapa esquemático de España con las cinco ciudades"
     >
       <defs>
         <radialGradient id="halo-mapa" cx="50%" cy="45%" r="60%">
-          <stop offset="0%" stopColor="rgb(42 212 255 / 0.10)" />
-          <stop offset="100%" stopColor="rgb(42 212 255 / 0)" />
+          <stop offset="0%" stopColor="rgb(53 214 245 / 0.10)" />
+          <stop offset="100%" stopColor="rgb(53 214 245 / 0)" />
         </radialGradient>
+        {/* Las isóbatas solo se pintan sobre el mar: la tierra las tapa. */}
+        <mask id="solo-mar">
+          <rect width={ancho} height={alto} fill="white" />
+          <path d={TRAZADO_VECINOS} fill="black" />
+          {COMUNIDADES.map((c) => (
+            <path key={c.id} d={c.trazado} fill="black" />
+          ))}
+        </mask>
       </defs>
       <rect width={ancho} height={alto} fill="url(#halo-mapa)" />
       {meridianos.map((lon) => {
@@ -171,28 +219,105 @@ function MapaEsquema({
           </g>
         )
       })}
+
+      {/* Isóbatas: bandas de profundidad alrededor de la costa */}
+      <g
+        mask="url(#solo-mar)"
+        fill="none"
+        stroke="var(--primary)"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        {(
+          [
+            [26, 0.03],
+            [16, 0.04],
+            [8, 0.06],
+          ] as const
+        ).map(([grosor, op]) => (
+          <g key={grosor} strokeWidth={grosor} strokeOpacity={op}>
+            <path d={TRAZADO_VECINOS} />
+            {COMUNIDADES.map((c) => (
+              <path key={c.id} d={c.trazado} />
+            ))}
+          </g>
+        ))}
+      </g>
+
       <path
         d={TRAZADO_VECINOS}
-        fill="rgb(143 179 196 / 0.06)"
-        stroke="rgb(143 179 196 / 0.25)"
+        fill="rgb(139 166 182 / 0.05)"
+        stroke="rgb(139 166 182 / 0.22)"
         strokeWidth={0.8}
       />
-      <path
-        d={TRAZADO_ESPANA}
-        fill="rgb(42 212 255 / 0.07)"
-        stroke="var(--primary)"
-        strokeWidth={1.2}
-        strokeOpacity={0.7}
-      />
+      {/* Comunidades autónomas: la de cada ciudad marcada se ilumina con su color. */}
+      <g strokeLinejoin="round">
+        {COMUNIDADES.map((c) => {
+          const ciudad = info.find(
+            (i) =>
+              COMUNIDAD_DE_CIUDAD[i.ciudad.id] === c.id &&
+              marcadas.includes(i.ciudad.id)
+          )
+          const enfocadaAqui = !!ciudad && ciudad.ciudad.id === foco
+          return (
+            <path
+              key={c.id}
+              d={c.trazado}
+              fill={ciudad ? ciudad.color : "rgb(53 214 245)"}
+              fillOpacity={enfocadaAqui ? 0.26 : ciudad ? 0.13 : 0.05}
+              stroke="var(--primary)"
+              strokeOpacity={enfocadaAqui ? 0.95 : ciudad ? 0.6 : 0.34}
+              strokeWidth={enfocadaAqui ? 1.4 : ciudad ? 1 : 0.6}
+              className="transition-[fill-opacity,stroke-opacity,stroke-width] duration-500"
+            >
+              <title>{c.nombre}</title>
+            </path>
+          )
+        })}
+      </g>
+
+      {/* Enlace vectorial nodo → lente (solo en pantallas anchas, donde la lente se superpone al mapa) */}
+      {enlace && (
+        <g className="enlace-lente" aria-hidden>
+          <path
+            key={foco}
+            className="enlace-lente-trazo"
+            d={enlace.trazo}
+            pathLength={1}
+            fill="none"
+            stroke="var(--primary)"
+            strokeWidth={1}
+          />
+          <circle
+            key={`punta-${foco}`}
+            className="enlace-lente-punta"
+            cx={enlace.punta[0]}
+            cy={enlace.punta[1]}
+            r={2.5}
+            fill="var(--primary)"
+          />
+        </g>
+      )}
+
+      {/* Rotulación vertical del escenario */}
+      <text
+        transform={`translate(${ancho - 8} ${alto / 2}) rotate(90)`}
+        textAnchor="middle"
+        className="fill-muted-foreground font-mono text-[8px] tracking-[0.3em]"
+      >
+        PENÍNSULA IBÉRICA · 36–44°N
+      </text>
 
       {info.map((i) => {
         const [x, y] = proyectar(i.ciudad.longitud, i.ciudad.latitud)
         const marcada = marcadas.includes(i.ciudad.id)
         const activa = i.estado !== "inactiva"
-        // Cerca del borde derecho, la etiqueta va a la izquierda del punto.
-        const izquierda = x > ancho - 150
-        const xTexto = izquierda ? x - 14 : x + 14
-        const ancla = izquierda ? "end" : "start"
+        const enfocadaNodo = i.ciudad.id === foco
+        const { lado, vert } = COLOCACION[i.ciudad.id] ?? { lado: 1, vert: 1 }
+        const codo: [number, number] = [x + lado * 16, y + vert * 16]
+        const fin: [number, number] = [x + lado * 34, y + vert * 16]
+        const xTexto = fin[0] + lado * 4
+        const ancla = lado === 1 ? "start" : "end"
         return (
           <g
             key={i.ciudad.id}
@@ -201,8 +326,20 @@ function MapaEsquema({
             aria-pressed={marcada}
             aria-disabled={bloqueado}
             aria-label={etiquetaAccesible(i, marcada)}
-            className={cn("outline-none", !bloqueado && "ciudad-objetivo")}
-            onClick={() => !bloqueado && alternar(i.ciudad.id)}
+            data-foco={enfocadaNodo ? "si" : "no"}
+            data-marcada={marcada ? "si" : "no"}
+            data-estado={i.estado}
+            className={cn(
+              "nodo outline-none",
+              !bloqueado && "ciudad-objetivo"
+            )}
+            style={{ "--color-ciudad": i.color } as React.CSSProperties}
+            onClick={() => {
+              alFocar(i.ciudad.id)
+              if (!bloqueado) alternar(i.ciudad.id)
+            }}
+            onPointerEnter={() => alFocar(i.ciudad.id)}
+            onFocus={() => alFocar(i.ciudad.id)}
             onKeyDown={(e) => {
               if (!bloqueado && (e.key === "Enter" || e.key === " ")) {
                 e.preventDefault()
@@ -211,15 +348,49 @@ function MapaEsquema({
             }}
           >
             {/* Zona de clic mayor que el punto */}
-            <circle cx={x} cy={y} r={22} fill="transparent" />
+            <circle cx={x} cy={y} r={24} fill="transparent" />
+            {/* Barrido breve al enfocar: un anillo que se expande una sola vez */}
+            {enfocadaNodo && (
+              <circle
+                key={`barrido-${i.ciudad.id}`}
+                className="nodo-barrido"
+                cx={x}
+                cy={y}
+                r={30}
+                fill="none"
+                stroke="var(--primary)"
+                strokeWidth={1}
+              />
+            )}
             {/* Recuadro de «objetivo fijado» (visible al apuntar o enfocar) */}
             <path
               className="mira-objetivo"
-              d={`M${x - 17},${y - 9}V${y - 17}H${x - 9}M${x + 9},${y - 17}H${x + 17}V${y - 9}M${x + 17},${y + 9}V${y + 17}H${x + 9}M${x - 9},${y + 17}H${x - 17}V${y + 9}`}
+              d={`M${x - 19},${y - 10}V${y - 19}H${x - 10}M${x + 10},${y - 19}H${x + 19}V${y - 10}M${x + 19},${y + 10}V${y + 19}H${x + 10}M${x - 10},${y + 19}H${x - 19}V${y + 10}`}
               fill="none"
               stroke="var(--primary)"
-              strokeWidth={2}
-              style={{ filter: "drop-shadow(0 0 4px rgb(42 212 255 / 0.8))" }}
+              strokeWidth={1.5}
+            />
+            {/* Anillo exterior: reacciona al hover y marca la selección */}
+            <circle
+              className="nodo-anillo"
+              cx={x}
+              cy={y}
+              r={12}
+              fill="none"
+              stroke={
+                i.estado === "error" ? "var(--destructive)" : "currentColor"
+              }
+              strokeDasharray={
+                i.estado === "error" ? "3 3" : marcada ? undefined : "1 4"
+              }
+            />
+            {/* Indicador de estado: cuatro marcas cardinales */}
+            <path
+              className="nodo-marcas"
+              d={`M${x},${y - 17}V${y - 13}M${x + 17},${y}H${x + 13}M${x},${y + 17}V${y + 13}M${x - 17},${y}H${x - 13}`}
+              stroke="currentColor"
+              strokeWidth={1.4}
+              fill="none"
             />
             {i.estado === "descargando" && (
               <circle
@@ -232,42 +403,47 @@ function MapaEsquema({
                 strokeWidth={2}
               />
             )}
-            {(i.estado === "completada" || i.estado === "error") && (
-              <circle
-                cx={x}
-                cy={y}
-                r={12}
-                fill="none"
-                stroke={i.estado === "error" ? "var(--destructive)" : i.color}
-                strokeWidth={1.5}
-                strokeDasharray={i.estado === "error" ? "3 3" : undefined}
-              />
-            )}
             <circle
+              className="nodo-nucleo"
               cx={x}
               cy={y}
-              r={7}
+              r={5.5}
               fill={activa ? i.color : "var(--background)"}
               stroke={activa ? "var(--background)" : i.color}
-              strokeWidth={2}
+              strokeWidth={1.6}
+            />
+            {/* Etiqueta técnica con línea conectora */}
+            <polyline
+              className="nodo-guia"
+              points={`${x + lado * 7},${y + vert * 7} ${codo[0]},${codo[1]} ${fin[0]},${fin[1]}`}
+              fill="none"
+              strokeWidth={0.9}
             />
             <text
               x={xTexto}
-              y={y - 2}
+              y={fin[1] - 3}
               textAnchor={ancla}
-              className="fill-foreground stroke-background stroke-[3px] text-[13px] font-semibold [paint-order:stroke]"
+              className="nodo-nombre"
             >
               {i.ciudad.nombre}
             </text>
             <text
               x={xTexto}
-              y={y + 12}
+              y={fin[1] + 9}
               textAnchor={ancla}
-              className="fill-muted-foreground stroke-background stroke-[3px] font-mono text-[11px] [paint-order:stroke]"
+              className="nodo-dato"
+            >
+              {coordenadaTecnica(i.ciudad)}
+            </text>
+            <text
+              x={xTexto}
+              y={fin[1] + 20}
+              textAnchor={ancla}
+              className="nodo-estado"
             >
               {i.stats
-                ? `${formatoDecimal(i.stats.temperaturaMedia)} °C media`
-                : TEXTO_ESTADO[i.estado][1]}
+                ? `${formatoDecimal(i.stats.temperaturaMedia)} °C MEDIA`
+                : TEXTO_ESTADO[i.estado][1].toUpperCase()}
             </text>
           </g>
         )
@@ -284,6 +460,8 @@ function MapaMapTiler({
   alternar,
   bloqueado,
   alFallar,
+  alFocar,
+  foco,
 }: {
   clave: string
   info: InfoCiudad[]
@@ -292,6 +470,9 @@ function MapaMapTiler({
   bloqueado: boolean
   /** Se llama si el mapa no llega a cargar (clave no válida, sin red…). */
   alFallar: (mensaje: string) => void
+  /** Ciudad enfocada (la lente muestra su lectura). */
+  foco?: string
+  alFocar: (id: string) => void
 }) {
   const contenedor = React.useRef<HTMLDivElement>(null)
   const marcadores = React.useRef(new Map<string, HTMLButtonElement>())
@@ -299,7 +480,9 @@ function MapaMapTiler({
   const alternarRef = React.useRef(alternar)
   const bloqueadoRef = React.useRef(bloqueado)
   const alFallarRef = React.useRef(alFallar)
+  const alFocarRef = React.useRef(alFocar)
   React.useEffect(() => {
+    alFocarRef.current = alFocar
     alternarRef.current = alternar
     bloqueadoRef.current = bloqueado
     alFallarRef.current = alFallar
@@ -359,8 +542,11 @@ function MapaMapTiler({
           el.type = "button"
           el.className = "mapa-marcador"
           el.addEventListener("click", () => {
+            alFocarRef.current(c.id)
             if (!bloqueadoRef.current) alternarRef.current(c.id)
           })
+          el.addEventListener("pointerenter", () => alFocarRef.current(c.id))
+          el.addEventListener("focus", () => alFocarRef.current(c.id))
           const mira = document.createElement("span")
           mira.className = "mapa-marcador-mira"
           const punto = document.createElement("span")
@@ -393,6 +579,7 @@ function MapaMapTiler({
       if (!el) continue
       const marcada = marcadas.includes(i.ciudad.id)
       el.dataset.estado = i.estado
+      el.dataset.foco = i.ciudad.id === foco ? "si" : "no"
       el.style.setProperty("--color-ciudad", i.color)
       el.setAttribute("aria-pressed", String(marcada))
       el.setAttribute("aria-label", etiquetaAccesible(i, marcada))
@@ -413,121 +600,117 @@ function MapaMapTiler({
   )
 }
 
-export function Mapa({ etl }: { etl: PipelineEtl }) {
+export function Mapa({
+  etl,
+  foco,
+  alFocar,
+}: {
+  etl: PipelineEtl
+  foco: string
+  alFocar: (id: string) => void
+}) {
   const info = useInfoCiudades(etl)
   const bloqueado = !!etl.extraccion?.enCurso || !!etl.carga?.enCurso
   const marcadas = etl.config.ciudades
   const alternar = (id: string) =>
     etl.alternarCiudadExtraccion(id, !marcadas.includes(id))
-  const props = { info, marcadas, alternar, bloqueado }
+  const props = { info, marcadas, alternar, bloqueado, foco, alFocar }
   const [falloMapTiler, setFalloMapTiler] = React.useState<string | null>(null)
 
+  const enfocada = info.find((i) => i.ciudad.id === foco) ?? info[0]
+  const lluviaMaxima = Math.max(0, ...info.map((i) => i.stats?.lluviaTotal ?? 0))
+  const ultimoRegistro = React.useMemo(() => {
+    let ultimo: string | undefined
+    for (const f of etl.validos) {
+      if (f.ciudad === enfocada.ciudad.nombre && (!ultimo || f.fecha_hora > ultimo))
+        ultimo = f.fecha_hora
+    }
+    return ultimo
+  }, [etl.validos, enfocada.ciudad.nombre])
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="hud-titulo flex items-center gap-2 text-sm">
-          <MapPinnedIcon className="size-4 text-primary" aria-hidden />
-          Mapa de estaciones
-        </CardTitle>
-        <CardDescription>
-          Las cinco ciudades de las que descargamos el tiempo. Pulsa una ciudad
-          para añadirla o quitarla de la próxima descarga.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_15rem]">
+    <section className="escena" aria-labelledby="titulo-mapa">
+      <header className="escena-cabecera">
+        <span className="rotulo-vertical" aria-hidden>
+          Estaciones · 05
+        </span>
         <div>
-          {CLAVE_MAPTILER && !falloMapTiler ? (
-            <MapaMapTiler
-              clave={CLAVE_MAPTILER}
-              alFallar={setFalloMapTiler}
-              {...props}
-            />
-          ) : (
-            <>
-              <MapaEsquema {...props} />
-              {falloMapTiler ? (
-                <p role="alert" className="mt-1 text-[0.7rem] text-amber-400">
-                  MapTiler: {falloMapTiler}. Se muestra el mapa esquemático.
-                  Revisa <code>NEXT_PUBLIC_MAPTILER_KEY</code> y los dominios
-                  permitidos de la clave en MapTiler Cloud.
-                </p>
-              ) : (
-                <p className="mt-1 text-[0.7rem] text-muted-foreground">
-                  Mapa esquemático (contorno: Natural Earth). Con una clave de
-                  MapTiler en <code>NEXT_PUBLIC_MAPTILER_KEY</code> se muestra
-                  el mapa interactivo.
-                </p>
-              )}
-            </>
-          )}
+          <h2 id="titulo-mapa" className="hud-titulo text-base sm:text-lg">
+            Mapa de estaciones
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Pulsa un nodo para añadir o quitar la ciudad de la próxima descarga.
+            La lente muestra la lectura de la ciudad enfocada.
+          </p>
         </div>
-        <ul
-          className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-1"
-          aria-label="Resumen por ciudad"
-        >
-          {info.map((i) => {
-            const [estado, texto] = TEXTO_ESTADO[i.estado]
-            return (
-              <li
-                key={i.ciudad.id}
-                className="neu-elevado rounded-md border bg-background/40 p-2 text-xs"
+      </header>
+
+      <div className="escena-lienzo">
+        {CLAVE_MAPTILER && !falloMapTiler ? (
+          <MapaMapTiler
+            clave={CLAVE_MAPTILER}
+            alFallar={setFalloMapTiler}
+            {...props}
+          />
+        ) : (
+          <MapaEsquema {...props} />
+        )}
+        <LenteAtmosferica
+          className="escena-lente"
+          nombre={enfocada.ciudad.nombre}
+          color={enfocada.color}
+          estadoTexto={TEXTO_ESTADO[enfocada.estado][1]}
+          stats={enfocada.stats}
+          lluviaMaxima={lluviaMaxima}
+          ultimoRegistro={ultimoRegistro}
+        />
+      </div>
+
+      {falloMapTiler ? (
+        <p role="alert" className="text-[0.7rem] text-amber-400">
+          MapTiler: {falloMapTiler}. Se muestra el mapa esquemático. Revisa{" "}
+          <code>NEXT_PUBLIC_MAPTILER_KEY</code> y los dominios permitidos de la
+          clave en MapTiler Cloud.
+        </p>
+      ) : !CLAVE_MAPTILER ? (
+        <p className="text-[0.7rem] text-muted-foreground">
+          Mapa esquemático (comunidades: click_that_hood; vecinos: Natural
+          Earth). Con una clave de MapTiler en{" "}
+          <code>NEXT_PUBLIC_MAPTILER_KEY</code> se muestra el mapa interactivo.
+        </p>
+      ) : null}
+
+      <aside className="escena-flotante">
+      <ul className="escena-estaciones" aria-label="Resumen por ciudad">
+        {info.map((i) => {
+          const [, texto] = TEXTO_ESTADO[i.estado]
+          return (
+            <li key={i.ciudad.id}>
+              <button
+                type="button"
+                className="estacion"
+                aria-pressed={i.ciudad.id === foco}
+                data-estado={i.estado}
+                style={{ "--color-ciudad": i.color } as React.CSSProperties}
+                onClick={() => alFocar(i.ciudad.id)}
               >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-1.5 font-semibold">
-                    <span
-                      aria-hidden
-                      className="size-2.5 rounded-full"
-                      style={{ background: i.color }}
-                    />
-                    {i.ciudad.nombre}
-                  </span>
-                  <InsigniaEstado estado={estado} etiqueta={texto} />
-                </div>
-                {i.stats ? (
-                  <dl className="mt-1.5 grid grid-cols-3 gap-1 text-center">
-                    <div>
-                      <dt className="text-[0.65rem] text-muted-foreground">
-                        Mín / máx
-                      </dt>
-                      <dd className="font-mono tabular-nums">
-                        {formatoDecimal(i.stats.temperaturaMin, 0)}/
-                        {formatoDecimal(i.stats.temperaturaMax, 0)} °C
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[0.65rem] text-muted-foreground">
-                        Humedad
-                      </dt>
-                      <dd className="font-mono tabular-nums">
-                        {formatoDecimal(i.stats.humedadMedia, 0)} %
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[0.65rem] text-muted-foreground">
-                        Lluvia
-                      </dt>
-                      <dd className="font-mono tabular-nums">
-                        {formatoDecimal(i.stats.lluviaTotal, 1)} mm
-                      </dd>
-                    </div>
-                  </dl>
-                ) : (
-                  <p className="mt-1 text-muted-foreground">
-                    {i.estado === "inactiva"
-                      ? "No se descargará."
-                      : "Sin datos todavía."}
-                  </p>
-                )}
+                <span className="estacion-barra" aria-hidden />
+                <span className="estacion-nombre">{i.ciudad.nombre}</span>
+                <span className="estacion-estado">{texto}</span>
                 {i.stats && (
-                  <p className="mt-1 text-[0.65rem] text-muted-foreground">
-                    {formatoEntero(i.stats.registros)} horas válidas
-                  </p>
+                  <span className="estacion-dato num-secundario">
+                    {formatoDecimal(i.stats.temperaturaMin, 0)}/
+                    {formatoDecimal(i.stats.temperaturaMax, 0)} °C ·{" "}
+                    {formatoDecimal(i.stats.humedadMedia, 0)} % ·{" "}
+                    {formatoDecimal(i.stats.lluviaTotal, 1)} mm
+                  </span>
                 )}
-              </li>
-            )
-          })}
-        </ul>
-      </CardContent>
-    </Card>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      </aside>
+    </section>
   )
 }

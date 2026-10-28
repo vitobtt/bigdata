@@ -1,26 +1,14 @@
 "use client"
 
-import {
-  ArrowDownIcon,
-  ArrowRightIcon,
-  RotateCwIcon,
-  SearchIcon,
-} from "lucide-react"
+import * as React from "react"
+import { CloudIcon, DatabaseIcon, RotateCwIcon, SearchIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import type { PipelineEtl } from "@/hooks/use-pipeline-etl"
 import { resumirCarga } from "@/lib/etl/carga"
 import { diasEntre } from "@/lib/etl/extraccion"
 import { formatoDuracion, formatoEntero } from "@/lib/formato"
-import { cn } from "@/lib/utils"
-import { InsigniaEstado, type Estado } from "./estado"
+import { ESTADO_TEXTO, InsigniaEstado, type Estado } from "./estado"
 
 export type Pestana =
   "json" | "transformados" | "validos" | "rechazados" | "carga" | "supabase"
@@ -188,6 +176,243 @@ function calcularFases(etl: PipelineEtl): Fase[] {
   ]
 }
 
+type NodoFlujo = {
+  clave: string
+  etiqueta: string
+  estado: Estado
+  etiquetaEstado?: string
+  /** Lectura breve bajo el nodo. */
+  resumen: string
+  fase?: Fase
+  explicacion: string
+  tecnico: string
+  entrada: string
+  salida: string
+  duracionMs?: number
+  extra?: string
+}
+
+/** Marca del nodo: su estado se lee por forma (no solo por color). */
+function MarcaNodo({ estado, contenido }: { estado: Estado; contenido: React.ReactNode }) {
+  return (
+    <span className="flujo-marca" data-estado={estado} aria-hidden>
+      <svg viewBox="0 0 44 44">
+        <circle className="flujo-marca-base" cx="22" cy="22" r="18" fill="none" />
+        {estado === "en_curso" && (
+          <circle
+            className="flujo-marca-giro"
+            cx="22"
+            cy="22"
+            r="18"
+            fill="none"
+            pathLength={100}
+            strokeDasharray="22 78"
+          />
+        )}
+        {estado === "completada" && (
+          <circle
+            className="flujo-marca-lleno"
+            cx="22"
+            cy="22"
+            r="18"
+            fill="none"
+          />
+        )}
+        {estado === "error" && (
+          <circle
+            className="flujo-marca-error"
+            cx="22"
+            cy="22"
+            r="18"
+            fill="none"
+            strokeDasharray="4 3"
+          />
+        )}
+      </svg>
+      <span className="flujo-marca-contenido">{contenido}</span>
+    </span>
+  )
+}
+
+/** Confirmación al terminar una carga verificada: el anillo y la marca se trazan una vez. */
+function ConfirmacionDestino({ filas }: { filas: number }) {
+  return (
+    <div className="confirmacion" role="status">
+      <svg viewBox="0 0 56 56" className="confirmacion-icono" aria-hidden>
+        <circle
+          className="confirmacion-anillo"
+          cx="28"
+          cy="28"
+          r="24"
+          fill="none"
+          pathLength={1}
+        />
+        <path
+          className="confirmacion-marca"
+          d="M17 29l8 8 14-17"
+          fill="none"
+          pathLength={1}
+        />
+      </svg>
+      <p className="confirmacion-texto">
+        <span className="etiqueta-tecnica">Verificado en destino</span>
+        <span className="num-principal confirmacion-cifra">
+          {formatoEntero(filas)}
+        </span>
+        <span className="etiqueta-tecnica">registros confirmados</span>
+      </p>
+    </div>
+  )
+}
+
+/** Posición de cada nodo en el escenario (centro, en % del ancho y del alto). */
+const POSICION_NODO: [number, number][] = [
+  [9, 50],
+  [23, 25],
+  [38, 76],
+  [53, 25],
+  [67, 76],
+  [81, 25],
+  [92, 58],
+]
+const ANCHO_VB = 1000
+const ALTO_VB = 380
+/** Separación vertical entre las hebras de cada cable. */
+const HEBRAS = [-8, 0, 8] as const
+
+function cable(
+  desde: [number, number],
+  hasta: [number, number],
+  desplazamiento: number
+) {
+  const x0 = (desde[0] / 100) * ANCHO_VB
+  const y0 = (desde[1] / 100) * ALTO_VB + desplazamiento
+  const x1 = (hasta[0] / 100) * ANCHO_VB
+  const y1 = (hasta[1] / 100) * ALTO_VB + desplazamiento
+  const dx = (x1 - x0) * 0.5
+  const r = (n: number) => Math.round(n * 10) / 10
+  return `M${r(x0)},${r(y0)}C${r(x0 + dx)},${r(y0)} ${r(x1 - dx)},${r(y1)} ${r(x1)},${r(y1)}`
+}
+
+/** Cables entre nodos: su aspecto y movimiento dependen del estado real del nodo que alimentan. */
+function Cables({ nodos }: { nodos: NodoFlujo[] }) {
+  return (
+    <svg
+      className="cables"
+      viewBox={`0 0 ${ANCHO_VB} ${ALTO_VB}`}
+      preserveAspectRatio="none"
+      aria-hidden
+    >
+      {nodos.slice(1).map((n, i) => {
+        const desde = POSICION_NODO[i]
+        const hasta = POSICION_NODO[i + 1]
+        return (
+          <g key={n.clave} className="cable" data-estado={n.estado}>
+            {HEBRAS.map((h, k) => (
+              <path
+                key={h}
+                id={`cable-${i}-${k}`}
+                className={`cable-hebra cable-hebra-${k}`}
+                d={cable(desde, hasta, h)}
+                fill="none"
+                vectorEffect="non-scaling-stroke"
+              />
+            ))}
+            {/* Paquetes de datos: solo mientras el nodo está realmente en curso */}
+            {n.estado === "en_curso" &&
+              HEBRAS.map((h, k) => (
+                <circle key={h} r="3" className="cable-paquete">
+                  <animateMotion
+                    dur={`${1.6 + k * 0.35}s`}
+                    begin={`${k * 0.4}s`}
+                    repeatCount="indefinite"
+                    path={cable(desde, hasta, h)}
+                  />
+                </circle>
+              ))}
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+/** Visualización real que acompaña a cada nodo (nada simulado). */
+function MicroNodo({ clave, etl }: { clave: string; etl: PipelineEtl }) {
+  const ext = etl.extraccion
+  if (clave === "origen") {
+    const ids = ext ? ext.ciudades : []
+    return (
+      <span className="micro micro-puntos" aria-hidden>
+        {ids.length === 0
+          ? [0, 1, 2, 3, 4].map((i) => <i key={i} data-estado="pendiente" />)
+          : ids.map((id) => <i key={id} data-estado={ext!.descargas[id].estado} />)}
+      </span>
+    )
+  }
+  if (clave === "Extracción" && ext) {
+    const horas = ext.ciudades.map((id) => {
+      const t = ext.descargas[id].json?.hourly?.time
+      return Array.isArray(t) ? t.length : 0
+    })
+    const maximo = Math.max(1, ...horas)
+    return (
+      <span className="micro micro-barras" aria-hidden>
+        {horas.map((h, i) => (
+          <i
+            key={ext.ciudades[i]}
+            data-estado={ext.descargas[ext.ciudades[i]].estado}
+            style={{ height: `${Math.max(12, (h / maximo) * 100)}%` }}
+          />
+        ))}
+      </span>
+    )
+  }
+  if (clave === "Limpieza" && etl.fases) {
+    const v = etl.validos.length
+    const r = etl.fases.limpieza.rechazados.length
+    if (v + r === 0) return null
+    return (
+      <span className="micro micro-apilada" aria-hidden>
+        <i className="seg-val" style={{ flexGrow: v }} />
+        <i className="seg-rng" style={{ flexGrow: r }} />
+      </span>
+    )
+  }
+  if (clave === "Filtrado y selección" && etl.validos.length > 0) {
+    const sel = etl.aCargar.length
+    const coinc = Math.max(0, etl.coinciden.length - sel)
+    const resto = Math.max(0, etl.validos.length - etl.coinciden.length)
+    return (
+      <span className="micro micro-apilada" aria-hidden>
+        <i className="seg-sel" style={{ flexGrow: sel }} />
+        <i className="seg-val" style={{ flexGrow: coinc }} />
+        <i className="seg-nada" style={{ flexGrow: resto }} />
+      </span>
+    )
+  }
+  if (clave === "Carga" && etl.carga) {
+    return (
+      <span className="micro micro-lotes" aria-hidden>
+        {etl.carga.lotes.map((l) => {
+          const estado =
+            l.envio === "error" ||
+            l.verificacion === "error" ||
+            l.verificacion === "incompleto"
+              ? "error"
+              : l.verificacion === "confirmado"
+                ? "completada"
+                : l.envio === "pendiente"
+                  ? "pendiente"
+                  : "en_curso"
+          return <i key={l.numero} data-estado={estado} />
+        })}
+      </span>
+    )
+  }
+  return null
+}
+
 export function Pipeline({
   etl,
   onInspeccionar,
@@ -199,151 +424,266 @@ export function Pipeline({
 }) {
   const fases = calcularFases(etl)
   const ext = etl.extraccion
+  const s = etl.supabase
+  const informe = etl.carga ? resumirCarga(etl.carga.lotes) : null
+
+  const nodos: NodoFlujo[] = [
+    {
+      clave: "origen",
+      etiqueta: "Open-Meteo",
+      estado: fases[0].estado,
+      resumen: ext
+        ? `${ext.ciudades.length} estación(es)`
+        : "archivo histórico",
+      explicacion:
+        "Fuente de los datos: el archivo histórico horario de Open-Meteo. Cada ciudad se pide por separado.",
+      tecnico: "API histórica · una petición HTTP por ciudad",
+      entrada: "—",
+      salida: ext ? `${ext.ciudades.length} ciudad(es) solicitadas` : "—",
+    },
+    ...fases.map(
+      (f): NodoFlujo => ({
+        clave: f.nombre,
+        etiqueta: f.nombre,
+        estado: f.estado,
+        etiquetaEstado: f.etiquetaEstado,
+        resumen: f.salida,
+        fase: f,
+        explicacion: f.explicacion,
+        tecnico: f.tecnico,
+        entrada: f.entrada,
+        salida: f.salida,
+        duracionMs: f.duracionMs,
+        extra: f.extra,
+      })
+    ),
+    {
+      clave: "destino",
+      etiqueta: "Supabase",
+      estado: fases[4].estado,
+      resumen: s.cargando
+        ? "comprobando…"
+        : !s.configurado
+          ? "sin configurar"
+          : s.conectado
+            ? `${s.totalRegistros == null ? "?" : formatoEntero(s.totalRegistros)} filas guardadas`
+            : "error de acceso",
+      explicacion:
+        "Destino final: la base de datos en la nube. Cada lote se envía y después se comprueba que las filas han llegado.",
+      tecnico: s.cargando
+        ? "Comprobando conexión…"
+        : s.configurado && s.proyecto
+          ? `Proyecto ${s.proyecto}`
+          : "Upsert por (ciudad, fecha_hora)",
+      entrada: informe
+        ? `${formatoEntero(informe.registrosConfirmados)} confirmados`
+        : "—",
+      salida: s.cargando
+        ? "—"
+        : s.conectado
+          ? `${s.totalRegistros == null ? "?" : formatoEntero(s.totalRegistros)} filas en total`
+          : "sin conexión",
+      extra: informe?.registrosFallidos
+        ? `${formatoEntero(informe.registrosFallidos)} en lotes fallidos`
+        : undefined,
+    },
+  ]
+
+  // Nodo que se muestra por defecto: el que está en curso, el primero con error o el último completado.
+  const porDefecto = (() => {
+    const enCurso = nodos.findIndex((n) => n.estado === "en_curso")
+    if (enCurso >= 0) return enCurso
+    const error = nodos.findIndex((n) => n.estado === "error")
+    if (error >= 0) return error
+    const ultimo = nodos.map((n) => n.estado).lastIndexOf("completada")
+    return ultimo >= 0 ? ultimo : 1
+  })()
+  const [elegido, setElegido] = React.useState<number | null>(null)
+  const activo = nodos[elegido ?? porDefecto] ?? nodos[porDefecto]
+  const esExtraccion = activo.clave === "Extracción"
+  const esDestino = activo.clave === "destino"
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="hud-titulo text-sm">
-          Pipeline ETL · las 5 fases
-        </CardTitle>
-        <CardDescription>
-          Estados, contadores y duraciones reales de la última ejecución de cada
-          fase.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <ol className="grid grid-cols-1 gap-2 md:grid-cols-[repeat(5,minmax(0,1fr))]">
-          {fases.map((f, i) => (
+    <section className="flujo-seccion plano-2" aria-labelledby="titulo-flujo">
+      <header className="escena-cabecera">
+        <span className="rotulo-vertical" aria-hidden>
+          Flujo · 03
+        </span>
+        <div>
+          <h2 id="titulo-flujo" className="hud-titulo text-base sm:text-lg">
+            Flujo ETL
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Open-Meteo → descarga → organización → revisión → selección →
+            Supabase. Cada tramo refleja el estado real de la última
+            ejecución; pulsa un nodo para ver su detalle.
+          </p>
+        </div>
+      </header>
+
+      <div className="constelacion">
+        <Cables nodos={nodos} />
+        <ol className="flujo">
+          {nodos.map((n, i) => (
             <li
-              key={f.nombre}
-              className="flex flex-col gap-2 md:flex-row md:items-stretch"
+              key={n.clave}
+              className="flujo-item"
+              data-estado={n.estado}
+              data-enlace={i > 0 ? n.estado : undefined}
+              style={
+                {
+                  "--nx": `${POSICION_NODO[i][0]}%`,
+                  "--ny": `${POSICION_NODO[i][1]}%`,
+                } as React.CSSProperties
+              }
             >
-              <article
-                className={cn(
-                  "neu-elevado flex min-w-0 flex-1 flex-col gap-2 rounded-lg border bg-background/40 p-3 transition-shadow",
-                  pestanaActiva === f.pestana && "ring-2 ring-ring/40",
-                  f.estado === "en_curso" &&
-                    "hud-escaneo border-primary/60 shadow-[0_0_18px_-4px_rgb(42_212_255/0.6)]",
-                  f.estado === "completada" && "border-emerald-500/40",
-                  f.estado === "error" && "border-destructive/50"
-                )}
-                aria-label={`Fase ${f.numero}: ${f.nombre}`}
+              <button
+                type="button"
+                className="flujo-nodo"
+                aria-pressed={n === activo}
+                aria-label={`${n.etiqueta}: ${n.etiquetaEstado ?? ESTADO_TEXTO[n.estado]}. ${n.resumen}`}
+                onClick={() => setElegido(i)}
               >
-                <header className="flex flex-wrap items-center justify-between gap-1">
-                  <h3 className="text-sm font-semibold">
-                    <span className="text-muted-foreground">{f.numero}.</span>{" "}
-                    {f.nombre}
-                  </h3>
-                  <InsigniaEstado
-                    estado={f.estado}
-                    etiqueta={f.etiquetaEstado}
+                <span className="flujo-cabecera">
+                  <MarcaNodo
+                    estado={n.estado}
+                    contenido={
+                      i === 0 ? (
+                        <CloudIcon className="size-3.5" />
+                      ) : i === nodos.length - 1 ? (
+                        <DatabaseIcon className="size-3.5" />
+                      ) : (
+                        i
+                      )
+                    }
                   />
-                </header>
-                <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5 text-xs">
-                  <dt className="text-muted-foreground">Entrada</dt>
-                  <dd className="font-mono tabular-nums">{f.entrada}</dd>
-                  <dt className="text-muted-foreground">Salida</dt>
-                  <dd className="font-mono tabular-nums">{f.salida}</dd>
-                  <dt className="text-muted-foreground">Duración</dt>
-                  <dd className="font-mono tabular-nums">
-                    {formatoDuracion(f.duracionMs)}
-                  </dd>
-                </dl>
-                {f.extra && <p className="text-xs font-medium">{f.extra}</p>}
-                <p className="text-xs">{f.explicacion}</p>
-                <p className="font-mono text-[0.65rem] text-muted-foreground">
-                  {f.tecnico}
-                </p>
-                <Button
-                  variant="outline"
-                  size="xs"
-                  className="mt-auto self-start"
-                  onClick={() => onInspeccionar(f.pestana)}
-                >
-                  <SearchIcon /> Inspeccionar
-                </Button>
-              </article>
-              {i < fases.length - 1 && (
-                <span
-                  aria-hidden
-                  className="flex items-center justify-center text-muted-foreground md:w-0"
-                >
-                  <ArrowDownIcon className="size-4 md:hidden" />
-                  <ArrowRightIcon className="hidden size-4 md:-mx-2 md:block md:translate-x-[0.3rem]" />
+                  <span className="flujo-nombre">{n.etiqueta}</span>
                 </span>
-              )}
+                <MicroNodo clave={n.clave} etl={etl} />
+                <span className="flujo-resumen">{n.resumen}</span>
+                <span className="flujo-estado">
+                  {n.etiquetaEstado ?? ESTADO_TEXTO[n.estado]}
+                </span>
+              </button>
             </li>
           ))}
         </ol>
+      </div>
 
-        {ext && (
-          <section
-            aria-labelledby="progreso-extraccion"
-            className="flex flex-col gap-2"
-          >
-            <h3 id="progreso-extraccion" className="text-sm font-medium">
-              Peticiones a Open-Meteo · {ext.inicio} → {ext.fin}
-            </h3>
-            <ul
-              className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5"
-              aria-live="polite"
+      <div className="flujo-detalle" aria-live="polite">
+        <div className="flujo-detalle-texto">
+          <h3 className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+            <span className="hud-titulo text-xs">{activo.etiqueta}</span>
+            <InsigniaEstado
+              estado={activo.estado}
+              etiqueta={activo.etiquetaEstado}
+            />
+          </h3>
+          <p className="text-sm">{activo.explicacion}</p>
+          <p className="font-mono text-[0.7rem] text-muted-foreground">
+            {activo.tecnico}
+          </p>
+          {activo.extra && (
+            <p className="text-xs font-medium text-amber-400">{activo.extra}</p>
+          )}
+          {activo.fase && (
+            <Button
+              variant="outline"
+              size="xs"
+              className="self-start"
+              aria-pressed={pestanaActiva === activo.fase.pestana}
+              onClick={() => onInspeccionar(activo.fase!.pestana)}
             >
-              {ext.ciudades.map((id) => {
-                const d = ext.descargas[id]
-                const estado: Estado =
-                  d.estado === "descargando"
-                    ? "en_curso"
-                    : d.estado === "completada"
-                      ? "completada"
-                      : d.estado === "error"
-                        ? "error"
-                        : "pendiente"
-                const etiqueta = {
-                  pendiente: "Pendiente",
-                  descargando: "Descargando",
-                  completada: "Procesada",
-                  error: "Error",
-                }[d.estado]
-                const horas = Array.isArray(d.json?.hourly?.time)
-                  ? d.json.hourly.time.length
-                  : null
-                return (
-                  <li
-                    key={id}
-                    className="neu-elevado flex flex-col gap-1 rounded-md border p-2 text-xs"
-                  >
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="font-medium">{d.nombre}</span>
-                      <InsigniaEstado estado={estado} etiqueta={etiqueta} />
-                    </div>
-                    <span className="font-mono text-muted-foreground tabular-nums">
-                      {horas !== null ? `${formatoEntero(horas)} h · ` : ""}
-                      {formatoDuracion(d.duracionMs)}
-                      {d.intentos > 1 ? ` · ${d.intentos} intentos` : ""}
-                    </span>
-                    {d.error && (
-                      <>
-                        <p className="break-words text-destructive">
-                          {d.error}
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="xs"
-                          className="self-start"
-                          disabled={ext.enCurso || !!etl.carga?.enCurso}
-                          onClick={() => void etl.reintentarCiudad(id)}
-                        >
-                          <RotateCwIcon /> Reintentar {d.nombre}
-                        </Button>
-                      </>
-                    )}
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        )}
-      </CardContent>
-    </Card>
+              <SearchIcon /> Inspeccionar
+            </Button>
+          )}
+        </div>
+        <dl className="flujo-lecturas">
+          <div>
+            <dt className="etiqueta-tecnica">Entrada</dt>
+            <dd className="num-secundario">{activo.entrada}</dd>
+          </div>
+          <div>
+            <dt className="etiqueta-tecnica">Salida</dt>
+            <dd className="num-secundario">{activo.salida}</dd>
+          </div>
+          <div>
+            <dt className="etiqueta-tecnica">Duración</dt>
+            <dd className="num-secundario">
+              {formatoDuracion(activo.duracionMs)}
+            </dd>
+          </div>
+        </dl>
+        {esDestino &&
+          activo.estado === "completada" &&
+          informe &&
+          informe.registrosConfirmados > 0 && (
+            <ConfirmacionDestino filas={informe.registrosConfirmados} />
+          )}
+      </div>
+
+      {esExtraccion && ext && (
+        <div className="flujo-peticiones">
+          <h3 id="progreso-extraccion" className="etiqueta-tecnica">
+            Peticiones a Open-Meteo · {ext.inicio} → {ext.fin}
+          </h3>
+          <ul
+            className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-5"
+            aria-live="polite"
+            aria-labelledby="progreso-extraccion"
+          >
+            {ext.ciudades.map((id) => {
+              const d = ext.descargas[id]
+              const estado: Estado =
+                d.estado === "descargando"
+                  ? "en_curso"
+                  : d.estado === "completada"
+                    ? "completada"
+                    : d.estado === "error"
+                      ? "error"
+                      : "pendiente"
+              const etiqueta = {
+                pendiente: "Pendiente",
+                descargando: "Descargando",
+                completada: "Procesada",
+                error: "Error",
+              }[d.estado]
+              const horas = Array.isArray(d.json?.hourly?.time)
+                ? d.json.hourly.time.length
+                : null
+              return (
+                <li key={id} className="peticion" data-estado={estado}>
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-medium">{d.nombre}</span>
+                    <InsigniaEstado estado={estado} etiqueta={etiqueta} />
+                  </div>
+                  <span className="font-mono text-[0.7rem] text-muted-foreground">
+                    {horas !== null ? `${formatoEntero(horas)} h · ` : ""}
+                    {formatoDuracion(d.duracionMs)}
+                    {d.intentos > 1 ? ` · ${d.intentos} intentos` : ""}
+                  </span>
+                  {d.error && (
+                    <>
+                      <p className="break-words text-xs text-destructive">
+                        {d.error}
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="xs"
+                        className="self-start"
+                        disabled={ext.enCurso || !!etl.carga?.enCurso}
+                        onClick={() => void etl.reintentarCiudad(id)}
+                      >
+                        <RotateCwIcon /> Reintentar {d.nombre}
+                      </Button>
+                    </>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+    </section>
   )
 }

@@ -1,30 +1,32 @@
 "use client"
 
+import * as React from "react"
 import { CircleAlertIcon, DownloadCloudIcon } from "lucide-react"
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { PipelineEtl } from "@/hooks/use-pipeline-etl"
 import { CIUDADES } from "@/lib/etl/ciudades"
+import { COLOR_CIUDAD } from "@/lib/etl/estadisticas"
 import {
   FECHA_MINIMA_ARCHIVO,
   MAX_DIAS_EXTRACCION,
   VARIABLES_HORARIAS,
   diasEntre,
 } from "@/lib/etl/extraccion"
-import { formatoEntero, hoyUtc } from "@/lib/formato"
+import { Cifra } from "@/components/hud/cifra"
+import { hoyUtc } from "@/lib/formato"
 
-export function Configuracion({ etl }: { etl: PipelineEtl }) {
+export function Configuracion({
+  etl,
+  alFocar,
+}: {
+  etl: PipelineEtl
+  alFocar?: (id: string) => void
+}) {
   const { config, setConfig, erroresConfig, extraer } = etl
   const ocupado = !!etl.extraccion?.enCurso || !!etl.carga?.enCurso
   const dias = diasEntre(config.inicio, config.fin)
@@ -37,19 +39,27 @@ export function Configuracion({ etl }: { etl: PipelineEtl }) {
   const alternarCiudad = etl.alternarCiudadExtraccion
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="hud-titulo text-sm">Panel de descarga</CardTitle>
-        <CardDescription>
-          Elige ciudades y fechas, y pulsa «Extraer datos». Descargaremos el
-          tiempo de cada hora (UTC) desde Open-Meteo: temperatura en °C, humedad
-          en % y lluvia en mm.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+    <section className="dock" aria-labelledby="titulo-dock">
+      <header className="dock-cabecera">
+        <span className="rotulo-vertical" aria-hidden>
+          Control · 01
+        </span>
+        <div>
+          <h2 id="titulo-dock" className="hud-titulo text-sm">
+            Panel de descarga
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Elige ciudades y fechas, y pulsa «Extraer datos». Descargaremos el
+            tiempo de cada hora (UTC) desde Open-Meteo: temperatura en °C,
+            humedad en % y lluvia en mm.
+          </p>
+        </div>
+      </header>
+
+      <div className="dock-cuerpo">
         <fieldset className="flex flex-col gap-2" disabled={ocupado}>
           <div className="flex items-center justify-between">
-            <legend className="text-sm font-medium">Ciudades</legend>
+            <legend className="etiqueta-tecnica">Estaciones</legend>
             <Button
               variant="link"
               size="xs"
@@ -65,85 +75,97 @@ export function Configuracion({ etl }: { etl: PipelineEtl }) {
               {todas ? "Ninguna" : "Todas"}
             </Button>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-1">
-            {CIUDADES.map((c) => (
-              <Label
-                key={c.id}
-                className="cursor-mira neu-alternable flex items-start gap-2 rounded-md border p-2 font-normal has-data-checked:border-primary/50 has-data-checked:bg-muted/50"
-              >
-                <Checkbox
-                  checked={config.ciudades.includes(c.id)}
-                  onCheckedChange={(v) => alternarCiudad(c.id, v)}
-                  disabled={ocupado}
-                />
-                <span className="flex min-w-0 flex-1 flex-wrap items-baseline justify-between gap-x-2">
-                  <span className="font-medium">{c.nombre}</span>
-                  <span className="font-mono text-[0.7rem] whitespace-nowrap text-muted-foreground">
-                    {c.latitud}, {c.longitud}
+          <div className="flex flex-col gap-1">
+            {CIUDADES.map((c) => {
+              const activa = config.ciudades.includes(c.id)
+              return (
+                <Label
+                  key={c.id}
+                  className="cursor-mira ciudad-fila font-normal"
+                  data-activa={activa ? "" : undefined}
+                  style={
+                    { "--color-ciudad": COLOR_CIUDAD[c.nombre] } as React.CSSProperties
+                  }
+                  onPointerEnter={() => alFocar?.(c.id)}
+                  onFocus={() => alFocar?.(c.id)}
+                >
+                  <Checkbox
+                    checked={activa}
+                    onCheckedChange={(v) => alternarCiudad(c.id, v)}
+                    disabled={ocupado}
+                  />
+                  <span className="ciudad-fila-nombre">{c.nombre}</span>
+                  <span className="ciudad-fila-coord">
+                    {c.latitud.toFixed(2)}, {c.longitud.toFixed(2)}
                   </span>
-                </span>
-              </Label>
-            ))}
+                </Label>
+              )
+            })}
           </div>
         </fieldset>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="fecha-inicio">Fecha inicial (UTC)</Label>
-            <Input
-              id="fecha-inicio"
-              type="date"
-              min={FECHA_MINIMA_ARCHIVO}
-              max={hoyUtc()}
-              value={config.inicio}
-              disabled={ocupado}
-              onChange={(e) =>
-                setConfig((c) => ({ ...c, inicio: e.target.value }))
-              }
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="fecha-fin">Fecha final (UTC)</Label>
-            <Input
-              id="fecha-fin"
-              type="date"
-              min={FECHA_MINIMA_ARCHIVO}
-              max={hoyUtc()}
-              value={config.fin}
-              disabled={ocupado}
-              onChange={(e) =>
-                setConfig((c) => ({ ...c, fin: e.target.value }))
-              }
-            />
+        <div className="flex flex-col gap-1.5">
+          <span className="etiqueta-tecnica">Intervalo (UTC)</span>
+          <div className="intervalo">
+            <div className="flex min-w-0 flex-col gap-1">
+              <Label htmlFor="fecha-inicio" className="intervalo-etiqueta">
+                Fecha inicial
+              </Label>
+              <Input
+                id="fecha-inicio"
+                type="date"
+                min={FECHA_MINIMA_ARCHIVO}
+                max={hoyUtc()}
+                value={config.inicio}
+                disabled={ocupado}
+                onChange={(e) =>
+                  setConfig((c) => ({ ...c, inicio: e.target.value }))
+                }
+              />
+            </div>
+            <span className="intervalo-flecha" aria-hidden>
+              →
+            </span>
+            <div className="flex min-w-0 flex-col gap-1">
+              <Label htmlFor="fecha-fin" className="intervalo-etiqueta">
+                Fecha final
+              </Label>
+              <Input
+                id="fecha-fin"
+                type="date"
+                min={FECHA_MINIMA_ARCHIVO}
+                max={hoyUtc()}
+                value={config.fin}
+                disabled={ocupado}
+                onChange={(e) =>
+                  setConfig((c) => ({ ...c, fin: e.target.value }))
+                }
+              />
+            </div>
           </div>
         </div>
 
-        <dl className="neu-hundido grid grid-cols-3 gap-2 rounded-lg bg-muted/60 p-3 text-center">
+        <dl className="dock-telemetria">
           <div>
-            <dt className="text-xs text-muted-foreground">Ciudades</dt>
-            <dd className="font-mono text-lg tabular-nums">
-              {config.ciudades.length}
+            <dt className="etiqueta-tecnica">Estaciones</dt>
+            <dd className="num-principal">
+              <Cifra valor={config.ciudades.length} />
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Días</dt>
-            <dd className="font-mono text-lg tabular-nums">
-              {diasValidos ? dias : "—"}
-              <span className="text-xs text-muted-foreground">
-                {" "}
-                / {MAX_DIAS_EXTRACCION}
-              </span>
+            <dt className="etiqueta-tecnica">Días</dt>
+            <dd className="num-principal">
+              {diasValidos ? <Cifra valor={dias} /> : "—"}
+              <span className="text-xs"> / {MAX_DIAS_EXTRACCION}</span>
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">
-              Registros previstos
-            </dt>
-            <dd className="font-mono text-lg tabular-nums">
-              {formatoEntero(registrosPrevistos)}
+            <dt className="etiqueta-tecnica">Registros previstos</dt>
+            <dd className="num-principal">
+              <Cifra valor={registrosPrevistos} fino />
             </dd>
           </div>
-          <p className="col-span-3 text-xs text-muted-foreground">
+          <p className="col-span-3 text-[0.7rem] leading-relaxed text-muted-foreground">
             {config.ciudades.length} petición(es) HTTP · ciudades × días × 24 h
             · variables: {VARIABLES_HORARIAS.join(", ")}
           </p>
@@ -163,7 +185,13 @@ export function Configuracion({ etl }: { etl: PipelineEtl }) {
           </Alert>
         )}
 
-        <Button size="lg" onClick={() => void extraer()} disabled={ocupado}>
+        <Button
+          size="lg"
+          className="accion-principal"
+          data-ejecutando={etl.extraccion?.enCurso ? "" : undefined}
+          onClick={() => void extraer()}
+          disabled={ocupado}
+        >
           <DownloadCloudIcon />
           {etl.extraccion?.enCurso ? "Extrayendo…" : "Extraer datos"}
         </Button>
@@ -172,7 +200,7 @@ export function Configuracion({ etl }: { etl: PipelineEtl }) {
             No se puede extraer mientras hay una carga en curso.
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }

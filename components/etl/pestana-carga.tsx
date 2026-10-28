@@ -308,7 +308,7 @@ export function PestanaCarga({ etl }: { etl: PipelineEtl }) {
               ].map(([k, v]) => (
                 <div key={k} className="rounded-md border p-2">
                   <dt className="text-muted-foreground">{k}</dt>
-                  <dd className="font-mono text-base tabular-nums">
+                  <dd className="num-principal text-xl">
                     {typeof v === "number" ? formatoEntero(v) : v}
                   </dd>
                 </div>

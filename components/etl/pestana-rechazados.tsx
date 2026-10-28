@@ -97,6 +97,11 @@ export function PestanaRechazados({ etl }: { etl: PipelineEtl }) {
         filas={rechazados}
         columnas={COLUMNAS}
         claveFila={(r) => r.fila.uid}
+        claseFila={(r) =>
+          r.duplicadoDe !== undefined || r.motivos.some((m) => m.startsWith("duplicado"))
+            ? "fila-duplicada"
+            : "fila-rechazada"
+        }
         vacio={
           etl.fases
             ? "Ningún registro rechazado: todos los datos recibidos superan las reglas de calidad."

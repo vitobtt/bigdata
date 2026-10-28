@@ -9,6 +9,13 @@ import { cn } from "@/lib/utils"
 
 export type Estado = "pendiente" | "en_curso" | "completada" | "error"
 
+export const ESTADO_TEXTO: Record<Estado, string> = {
+  pendiente: "Pendiente",
+  en_curso: "En curso",
+  completada: "Completada",
+  error: "Con errores",
+}
+
 const ESTADOS: Record<
   Estado,
   { etiqueta: string; icono: typeof CircleCheckIcon; clase: string }
@@ -54,6 +61,8 @@ export function InsigniaEstado({
       className={cn(
         "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-xs font-medium whitespace-nowrap",
         e.clase,
+        estado === "completada" && "hud-confirmar",
+        estado === "error" && "hud-alerta",
         className
       )}
     >
